@@ -1,0 +1,9 @@
+# Minimal Supabase CLI config for migrations + seed.
+# Link a remote project with: supabase link --project-ref <ref>
+
+[db]
+major_version = 15
+
+[db.seed]
+enabled = true
+sql_paths = ['./seed.sql']

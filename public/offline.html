@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#fff7f9" />
+    <title>Offline · Purrfect Home</title>
+    <style>
+      :root { color-scheme: light dark; --bg: #fff7f9; --fg: #4a3b47; --muted: #7e6676; --primary: #c93d78;
+        --fur: #fbe3d3; --line: #4a3b47; --blush: #f7a8c2; --shadow: #fce7ef; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #2a1f28; --fg: #f7e6ee; --muted: #b9a3b2; --primary: #f07aa6;
+        --fur: #e8c8b6; --line: #2a1f28; --blush: #e88aae; --shadow: #4a3343; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; padding: 16px;
+        background: var(--bg); color: var(--fg); font: 16px/1.5 ui-rounded, "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif; }
+      main { max-width: 26rem; text-align: center; display: grid; gap: 12px; justify-items: center; }
+      h1 { margin: 0; font-size: 1.5rem; }
+      p { margin: 0; color: var(--muted); }
+      button { margin-top: 8px; padding: 10px 22px; border-radius: 999px; cursor: pointer; border: 0;
+        background: var(--primary); color: #fff; font: inherit; font-weight: 700; }
+      @media (prefers-color-scheme: dark) { button { color: #2a1f28; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg viewBox="0 0 150 96" width="160" aria-hidden="true">
+        <ellipse cx="78" cy="88" rx="56" ry="5" fill="var(--shadow)" />
+        <path d="M40 70 C 36 44, 66 36, 92 40 C 118 44, 128 60, 122 76 C 116 88, 52 90, 40 70 Z" fill="var(--fur)" stroke="var(--line)" stroke-width="2.4" stroke-linejoin="round" />
+        <path d="M118 78 C 106 92, 62 92, 50 80" fill="none" stroke="var(--line)" stroke-width="9" stroke-linecap="round" />
+        <path d="M118 78 C 106 92, 62 92, 50 80" fill="none" stroke="var(--fur)" stroke-width="5" stroke-linecap="round" />
+        <g transform="translate(44 60) scale(0.82)" stroke="var(--line)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round">
+          <path d="M-20 -6 L-16 -28 L-3 -17 Z" fill="var(--fur)" />
+          <path d="M20 -6 L16 -28 L3 -17 Z" fill="var(--fur)" />
+          <ellipse cx="0" cy="0" rx="22" ry="19" fill="var(--fur)" />
+          <path d="M-11.5 -1.5 q3.5 3.5 7 0 M4.5 -1.5 q3.5 3.5 7 0" fill="none" />
+          <path d="M-2.4 4.2 h4.8 l-2.4 2.8 Z" fill="var(--blush)" stroke-width="1.2" />
+        </g>
+        <text x="80" y="24" fill="var(--muted)" font-size="14" font-weight="700">z z</text>
+      </svg>
+      <h1>You're offline</h1>
+      <p>Purrfect Home needs a connection to load your home's data. Nothing is stored on this device.</p>
+      <button type="button" onclick="location.reload()">Try again</button>
+    </main>
+  </body>
+</html>

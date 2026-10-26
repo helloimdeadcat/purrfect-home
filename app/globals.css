@@ -1,0 +1,227 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  /* Fredoka has no Cyrillic: names like «Наша семья» fall back to Nunito. */
+  --font-heading: var(--font-display), var(--font-sans);
+  --color-income: var(--income);
+  --color-expense: var(--expense);
+  --color-income-mark: var(--income-mark);
+  --color-expense-mark: var(--expense-mark);
+  --color-chart-neutral: var(--chart-neutral);
+  --color-chart-8: var(--chart-8);
+  --color-chart-7: var(--chart-7);
+  --color-chart-6: var(--chart-6);
+  --color-cat-fur: var(--cat-fur);
+  --color-cat-fur-2: var(--cat-fur-2);
+  --color-cat-line: var(--cat-line);
+  --color-blush: var(--blush);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/*
+ * "Blush & mint" — soft, couple-friendly theme.
+ * Contrast (WCAG): primary button 4.75, body text 9.9, muted text ≈ 5,
+ * income/expense text 5.5 / 5.1. Chart palettes validated with the dataviz
+ * validator (lightness band, chroma, CVD separation, contrast) per mode.
+ */
+:root {
+  --background: #fff7f9;
+  --foreground: #4a3b47;
+  --card: #ffffff;
+  --card-foreground: #4a3b47;
+  --popover: #ffffff;
+  --popover-foreground: #4a3b47;
+  --primary: #c93d78;
+  --primary-foreground: #ffffff;
+  --secondary: #fce7ef;
+  --secondary-foreground: #8e2a58;
+  --muted: #fbeff3;
+  --muted-foreground: #7e6676;
+  --accent: #e3f5ee;
+  --accent-foreground: #1f5e4c;
+  --destructive: #b4324f;
+  --border: #f0d9e2;
+  --input: #ebcfdb;
+  --ring: #f27ba0;
+
+  /* Money semantics: *-mark for chart fills, plain for text. */
+  --income: #00785c;
+  --expense: #c23a72;
+  --income-mark: #00785c;
+  --expense-mark: #e8679a;
+
+  /* Categorical order is fixed: rose, sky, apricot, teal, lavender, olive, orchid, leaf. */
+  --chart-1: #d9467f;
+  --chart-2: #3a86cc;
+  --chart-3: #c97624;
+  --chart-4: #00826b;
+  --chart-5: #9479db;
+  --chart-6: #7d6a12;
+  --chart-7: #c25ba8;
+  --chart-8: #5e9a34;
+  --chart-neutral: #c4b2bd;
+
+  /* Illustration colours */
+  --cat-fur: #fbe3d3;
+  --cat-fur-2: #e9e1ee;
+  --cat-line: #4a3b47;
+  --blush: #f7a8c2;
+
+  --radius: 1rem;
+  --sidebar: #fff7f9;
+  --sidebar-foreground: #4a3b47;
+  --sidebar-primary: #c93d78;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #fce7ef;
+  --sidebar-accent-foreground: #8e2a58;
+  --sidebar-border: #f0d9e2;
+  --sidebar-ring: #f27ba0;
+}
+
+/* Selected for dark (not inverted): plum surfaces, lighter pink accents. */
+.dark {
+  --background: #2a1f28;
+  --foreground: #f7e6ee;
+  --card: #352833;
+  --card-foreground: #f7e6ee;
+  --popover: #352833;
+  --popover-foreground: #f7e6ee;
+  --primary: #f07aa6;
+  --primary-foreground: #2a1f28;
+  --secondary: #4a3343;
+  --secondary-foreground: #f7e6ee;
+  --muted: #3b2c38;
+  --muted-foreground: #b9a3b2;
+  --accent: #23463d;
+  --accent-foreground: #bff0df;
+  --destructive: #f2788e;
+  --border: rgb(255 255 255 / 10%);
+  --input: rgb(255 255 255 / 16%);
+  --ring: #f07aa6;
+
+  --income: #3fbf9a;
+  --expense: #f28ab0;
+  --income-mark: #2aa884;
+  --expense-mark: #c4487a;
+
+  --chart-1: #e26394;
+  --chart-2: #4f96d8;
+  --chart-3: #c67830;
+  --chart-4: #1c9f82;
+  --chart-5: #9178d6;
+  --chart-6: #9e8420;
+  --chart-7: #c76cb2;
+  --chart-8: #62993a;
+  --chart-neutral: #6e5f6a;
+
+  --cat-fur: #e8c8b6;
+  --cat-fur-2: #cfc4d8;
+  --cat-line: #2a1f28;
+  --blush: #e88aae;
+
+  --sidebar: #2a1f28;
+  --sidebar-foreground: #f7e6ee;
+  --sidebar-primary: #f07aa6;
+  --sidebar-primary-foreground: #2a1f28;
+  --sidebar-accent: #4a3343;
+  --sidebar-accent-foreground: #f7e6ee;
+  --sidebar-border: rgb(255 255 255 / 10%);
+  --sidebar-ring: #f07aa6;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+    /* A whisper of blush at the top of every page. */
+    background-image: radial-gradient(
+      ellipse 80% 40% at 50% -10%,
+      color-mix(in srgb, var(--secondary) 90%, transparent),
+      transparent 70%
+    );
+    background-repeat: no-repeat;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-heading);
+    letter-spacing: 0;
+  }
+  ::selection {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+}
+
+@layer utilities {
+  /* Soft "sticker" card used across the app. */
+  .card-soft {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 1px 0 rgb(201 61 120 / 4%), 0 6px 18px -10px rgb(201 61 120 / 22%);
+  }
+  @keyframes heart-beat {
+    0%, 100% { transform: scale(1); }
+    15% { transform: scale(1.18); }
+    30% { transform: scale(0.96); }
+    45% { transform: scale(1.1); }
+  }
+  .animate-heart {
+    animation: heart-beat 1.6s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-heart {
+      animation: none;
+    }
+  }
+}
