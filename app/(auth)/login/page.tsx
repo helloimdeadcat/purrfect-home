@@ -25,7 +25,7 @@ export default async function LoginPage({ searchParams }: Props) {
           </Link>
         </CardTitle>
         <CardDescription>
-          {invite ? "Sign in to accept your invitation" : "Sign in to your household"}
+          {invite ? "Войди, чтобы принять приглашение" : "Войди в свою семью"}
         </CardDescription>
       </CardHeader>
       <CardContent>

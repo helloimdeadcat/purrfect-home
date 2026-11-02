@@ -44,13 +44,13 @@ export function CreateTransferForm({ accounts, defaultDate }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to create transfer");
+        setError(data.error ?? "Не получилось сделать перевод");
         return;
       }
       formEl.reset();
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -59,17 +59,17 @@ export function CreateTransferForm({ accounts, defaultDate }: Props) {
   if (activeAccounts.length < 2) {
     return (
       <p className="text-sm text-muted-foreground">
-        Add at least two accounts to transfer between them.
+        Добавь хотя бы два счёта, чтобы переводить деньги между ними.
       </p>
     );
   }
 
   return (
     <form onSubmit={onSubmit} className="grid gap-3 card-soft p-4">
-      <h2 className="font-medium">Transfer</h2>
+      <h2 className="font-medium">Перевод</h2>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="fromAccountId">From</Label>
+          <Label htmlFor="fromAccountId">Откуда</Label>
           <select
             id="fromAccountId"
             name="fromAccountId"
@@ -85,7 +85,7 @@ export function CreateTransferForm({ accounts, defaultDate }: Props) {
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="toAccountId">To</Label>
+          <Label htmlFor="toAccountId">Куда</Label>
           <select
             id="toAccountId"
             name="toAccountId"
@@ -103,11 +103,11 @@ export function CreateTransferForm({ accounts, defaultDate }: Props) {
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="amount">Amount</Label>
+          <Label htmlFor="amount">Сумма</Label>
           <Input id="amount" name="amount" inputMode="decimal" required />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="transferDate">Date</Label>
+          <Label htmlFor="transferDate">Дата</Label>
           <Input
             id="transferDate"
             name="transferDate"
@@ -118,8 +118,8 @@ export function CreateTransferForm({ accounts, defaultDate }: Props) {
         </div>
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="description">Description</Label>
-        <Input id="description" name="description" placeholder="Optional" />
+        <Label htmlFor="description">Описание</Label>
+        <Input id="description" name="description" placeholder="Необязательно" />
       </div>
       {error ? (
         <p className="text-sm text-destructive" role="alert">
@@ -127,7 +127,7 @@ export function CreateTransferForm({ accounts, defaultDate }: Props) {
         </p>
       ) : null}
       <Button type="submit" disabled={pending} className="w-fit">
-        {pending ? "Transferring…" : "Transfer"}
+        {pending ? "Переводим…" : "Перевести"}
       </Button>
     </form>
   );

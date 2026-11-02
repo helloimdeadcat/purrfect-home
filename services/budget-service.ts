@@ -246,7 +246,7 @@ export async function createMonthlyCategoryBudget(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot create budgets"),
+      error: err("FORBIDDEN", "Наблюдатели не могут создавать бюджеты"),
     };
   }
 
@@ -267,12 +267,12 @@ export async function createMonthlyCategoryBudget(
     (category.household_id !== null &&
       category.household_id !== ctx.householdId)
   ) {
-    return { data: null, error: err("VALIDATION", "Category not found") };
+    return { data: null, error: err("VALIDATION", "Категория не найдена") };
   }
   if (category.type !== "expense" && category.type !== "both") {
     return {
       data: null,
-      error: err("VALIDATION", "Budgets can only be set for expense categories"),
+      error: err("VALIDATION", "Бюджет можно задать только для категорий расходов"),
     };
   }
 
@@ -291,7 +291,7 @@ export async function createMonthlyCategoryBudget(
       data: null,
       error: err(
         "CONFLICT",
-        "An active budget already exists for this category in the selected month",
+        "На этот месяц у категории уже есть бюджет",
       ),
     };
   }
@@ -326,13 +326,13 @@ export async function createMonthlyCategoryBudget(
         data: null,
         error: err(
           "CONFLICT",
-          "An active budget already exists for this category in the selected month",
+          "На этот месяц у категории уже есть бюджет",
         ),
       };
     }
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create budget"),
+      error: err("DB", error?.message ?? "Не получилось создать бюджет"),
     };
   }
 
@@ -348,7 +348,7 @@ export async function updateBudget(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot update budgets"),
+      error: err("FORBIDDEN", "Наблюдатели не могут менять бюджеты"),
     };
   }
 
@@ -363,7 +363,7 @@ export async function updateBudget(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Budget not found") };
+    return { data: null, error: err("NOT_FOUND", "Бюджет не найден") };
   }
 
   if (input.categoryId) {
@@ -382,14 +382,14 @@ export async function updateBudget(
       (category.household_id !== null &&
         category.household_id !== ctx.householdId)
     ) {
-      return { data: null, error: err("VALIDATION", "Category not found") };
+      return { data: null, error: err("VALIDATION", "Категория не найдена") };
     }
     if (category.type !== "expense" && category.type !== "both") {
       return {
         data: null,
         error: err(
           "VALIDATION",
-          "Budgets can only be set for expense categories",
+          "Бюджет можно задать только для категорий расходов",
         ),
       };
     }
@@ -418,13 +418,13 @@ export async function updateBudget(
         data: null,
         error: err(
           "CONFLICT",
-          "An active budget already exists for this category in the selected month",
+          "На этот месяц у категории уже есть бюджет",
         ),
       };
     }
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update budget"),
+      error: err("DB", error?.message ?? "Не получилось обновить бюджет"),
     };
   }
 
@@ -440,7 +440,7 @@ export async function deleteBudget(
   budgetId: string,
 ): Promise<{ error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { error: err("FORBIDDEN", "Viewers cannot delete budgets") };
+    return { error: err("FORBIDDEN", "Наблюдатели не могут удалять бюджеты") };
   }
 
   const { data: existing, error: existingError } = await supabase
@@ -454,7 +454,7 @@ export async function deleteBudget(
     return { error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { error: err("NOT_FOUND", "Budget not found") };
+    return { error: err("NOT_FOUND", "Бюджет не найден") };
   }
 
   if (canAdmin(ctx.role)) {

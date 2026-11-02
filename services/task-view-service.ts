@@ -37,7 +37,7 @@ export async function loadTaskView(
     listFamilyMembers(supabase, ctx),
   ]);
   if (agendaResult.error || !agendaResult.data) {
-    return { data: null, error: agendaResult.error?.message ?? "Could not load tasks" };
+    return { data: null, error: agendaResult.error?.message ?? "Не получилось загрузить дела" };
   }
 
   const people = buildPeople(membersResult.data ?? [], ctx.user.id);
@@ -51,7 +51,7 @@ export async function loadTaskView(
       people,
       personOptions: [
         people.together,
-        ...people.list.map((p) => ({ ...p, label: p.isYou ? `${p.label} (you)` : p.label })),
+        ...people.list.map((p) => ({ ...p, label: p.isYou ? `${p.label} (ты)` : p.label })),
       ],
       personOf: (item) => personFor(people, item.assigneeMemberId),
       repeatLabelOf: (item) => {

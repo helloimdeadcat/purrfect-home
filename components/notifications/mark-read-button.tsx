@@ -26,12 +26,12 @@ export function MarkReadButton({ ids, label }: Props) {
         body: JSON.stringify(ids ? { ids } : {}),
       });
       if (!response.ok) {
-        setError("Could not update");
+        setError("Не получилось обновить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }

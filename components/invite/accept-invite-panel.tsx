@@ -5,6 +5,15 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { LOCALE } from "@/lib/locale";
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: "ещё не принято",
+  accepted: "уже принято",
+  revoked: "отозвано",
+  expired: "просрочено",
+  invalid: "недействительно",
+};
 
 type Preview = {
   isValid: boolean;
@@ -49,12 +58,12 @@ export function AcceptInvitePanel({
         };
         if (cancelled) return;
         if (!response.ok || !data.preview) {
-          setLoadError(data.error ?? "Could not load invitation");
+          setLoadError(data.error ?? "Не получилось загрузить приглашение");
           return;
         }
         setPreview(data.preview);
       } catch {
-        if (!cancelled) setLoadError("Network error");
+        if (!cancelled) setLoadError("Ошибка сети");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -79,13 +88,13 @@ export function AcceptInvitePanel({
         redirectTo?: string;
       };
       if (!response.ok) {
-        setAcceptError(data.error ?? "Could not accept invitation");
+        setAcceptError(data.error ?? "Не получилось принять приглашение");
         return;
       }
       router.push(data.redirectTo ?? "/app/dashboard");
       router.refresh();
     } catch {
-      setAcceptError("Network error");
+      setAcceptError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -95,13 +104,13 @@ export function AcceptInvitePanel({
   const registerHref = `/register?invite=${encodeURIComponent(token)}`;
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading invitation…</p>;
+    return <p className="text-sm text-muted-foreground">Загружаем приглашение…</p>;
   }
 
   if (loadError || !preview) {
     return (
       <p className="text-sm text-destructive" role="alert">
-        {loadError ?? "Invalid invitation"}
+        {loadError ?? "Приглашение недействительно"}
       </p>
     );
   }
@@ -110,15 +119,16 @@ export function AcceptInvitePanel({
     return (
       <div className="grid gap-2 text-sm">
         <p className="text-destructive" role="alert">
-          This invitation is {preview.status || "invalid"}.
+          Это приглашение{" "}
+          {STATUS_LABELS[preview.status || "invalid"] ?? preview.status}.
         </p>
         {preview.householdName ? (
           <p className="text-muted-foreground">
-            Household: {preview.householdName}
+            Семья: {preview.householdName}
           </p>
         ) : null}
         <Link href="/login" className="underline underline-offset-4">
-          Sign in
+          Войти
         </Link>
       </div>
     );
@@ -128,20 +138,20 @@ export function AcceptInvitePanel({
     <div className="grid gap-4">
       <div className="grid gap-1 text-sm">
         <p>
-          You are invited to join{" "}
+          Тебя приглашают в семью{" "}
           <span className="font-medium">
-            {preview.householdName ?? "a household"}
+            {preview.householdName ?? "без названия"}
           </span>
           .
         </p>
         {preview.invitedEmail ? (
           <p className="text-muted-foreground">
-            Invitation for {preview.invitedEmail}
+            Приглашение для {preview.invitedEmail}
           </p>
         ) : null}
         {preview.expiresAt ? (
           <p className="text-muted-foreground">
-            Expires {new Date(preview.expiresAt).toLocaleString()}
+            Действует до {new Date(preview.expiresAt).toLocaleString(LOCALE)}
           </p>
         ) : null}
       </div>
@@ -152,12 +162,12 @@ export function AcceptInvitePanel({
           preview.invitedEmail &&
           userEmail.toLowerCase() !== preview.invitedEmail.toLowerCase() ? (
             <p className="text-sm text-destructive" role="alert">
-              Signed in as {userEmail}, but this invite is for{" "}
-              {preview.invitedEmail}. Sign out and use the invited account.
+              Сейчас ты в аккаунте {userEmail}, а приглашение для{" "}
+              {preview.invitedEmail}. Выйди и зайди под приглашённым аккаунтом.
             </p>
           ) : (
             <Button type="button" disabled={pending} onClick={onAccept}>
-              {pending ? "Joining…" : "Accept invitation"}
+              {pending ? "Присоединяемся…" : "Принять приглашение"}
             </Button>
           )}
           {acceptError ? (
@@ -169,14 +179,14 @@ export function AcceptInvitePanel({
       ) : (
         <div className="grid gap-2 text-sm">
           <p className="text-muted-foreground">
-            Sign in or create an account with the invited email, then accept.
+            Войди или зарегистрируйся на почту из приглашения, а потом прими его.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link href={loginHref} className="underline underline-offset-4">
-              Sign in
+              Войти
             </Link>
             <Link href={registerHref} className="underline underline-offset-4">
-              Create account
+              Зарегистрироваться
             </Link>
           </div>
         </div>

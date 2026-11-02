@@ -9,12 +9,32 @@ import { canAdmin, canWrite, getHouseholdContext } from "@/lib/auth/household";
 import { getSessionUser } from "@/lib/auth/session";
 import { displayMoney } from "@/lib/calculations/money";
 import { listHouseholdCategories } from "@/lib/data/categories";
-import { listAccountsWithBalances } from "@/services/account-service";
+import { listAccounts } from "@/services/account-service";
 import { listIncomeSources } from "@/services/income-source-service";
 import { listReceiptsForTransactions } from "@/services/receipt-service";
 import { getHouseholdToday } from "@/services/settings-service";
 import { listTags } from "@/services/tag-service";
 import { listTransactions } from "@/services/transaction-service";
+import { LOCALE } from "@/lib/locale";
+
+const TX_TYPE_LABELS: Record<string, string> = {
+  expense: "Расход",
+  income: "Доход",
+  transfer: "Перевод",
+  adjustment: "Корректировка",
+};
+
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function formatDay(isoDate: string): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? isoDate : dayFormat.format(date);
+}
 
 export default async function TransactionsPage() {
   const { supabase, user } = await getSessionUser();
@@ -30,7 +50,7 @@ export default async function TransactionsPage() {
     tagsResult,
     sourcesResult,
   ] = await Promise.all([
-    listAccountsWithBalances(supabase, ctx),
+    listAccounts(supabase, ctx),
     listHouseholdCategories(supabase, ctx.householdId),
     listTransactions(supabase, ctx, { limit: 50 }),
     listTags(supabase, ctx),
@@ -60,9 +80,9 @@ export default async function TransactionsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Transactions</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Операции</h1>
         <p className="text-muted-foreground">
-          Quick capture for everyday income and expenses.
+          Быстро записывай повседневные доходы и расходы.
         </p>
       </div>
 
@@ -84,10 +104,10 @@ export default async function TransactionsPage() {
       />
 
       <section className="grid gap-2">
-        <h2 className="font-medium">Recent</h2>
+        <h2 className="font-medium">Последние</h2>
         {transactions.length === 0 ? (
-          <EmptyState title="No transactions yet">
-            Use the form above to add your first income or expense.
+          <EmptyState title="Пока нет операций">
+            Добавь первый доход или расход через форму выше.
           </EmptyState>
         ) : (
           transactions.map((tx) => (
@@ -98,16 +118,16 @@ export default async function TransactionsPage() {
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate font-medium">
-                    {tx.merchant || tx.description || tx.type}
+                    {tx.merchant || tx.description || TX_TYPE_LABELS[tx.type] || tx.type}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {tx.transaction_date} ·{" "}
-                    {accountNameById.get(tx.account_id) ?? "Account"}
+                    {formatDay(tx.transaction_date)} ·{" "}
+                    {accountNameById.get(tx.account_id) ?? "Счёт"}
                     {tx.category_id
-                      ? ` · ${categoryNameById.get(tx.category_id) ?? "Category"}`
+                      ? ` · ${categoryNameById.get(tx.category_id) ?? "Категория"}`
                       : ""}
                     {tx.income_source_id
-                      ? ` · ${sourceNameById.get(tx.income_source_id) ?? "Source"}`
+                      ? ` · ${sourceNameById.get(tx.income_source_id) ?? "Источник"}`
                       : ""}
                   </p>
                 </div>

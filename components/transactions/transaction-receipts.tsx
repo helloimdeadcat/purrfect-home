@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { compressReceiptImage } from "@/lib/image/compress-receipt";
 import type { ReceiptView } from "@/services/receipt-service";
 
 type Props = {
@@ -13,9 +14,9 @@ type Props = {
 };
 
 function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  if (bytes < 1024) return `${bytes} Б`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} КБ`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace(".", ",")} МБ`;
 }
 
 export function TransactionReceipts({ transactionId, receipts, canUpload }: Props) {
@@ -29,20 +30,23 @@ export function TransactionReceipts({ transactionId, receipts, canUpload }: Prop
     setError(null);
     setPending(true);
     try {
+      // Shrinks big photos (saves Storage/egress); PDFs and anything that
+      // can't be decoded or wouldn't get smaller go up unchanged.
+      const prepared = await compressReceiptImage(file);
       const body = new FormData();
-      body.append("file", file);
+      body.append("file", prepared);
       const response = await fetch(`/api/transactions/${transactionId}/receipts`, {
         method: "POST",
         body,
       });
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
-        setError(data.error ?? "Upload failed");
+        setError(data.error ?? "Не получилось загрузить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -56,12 +60,12 @@ export function TransactionReceipts({ transactionId, receipts, canUpload }: Prop
       const response = await fetch(`/api/receipts/${receiptId}`, { method: "DELETE" });
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
-        setError(data.error ?? "Delete failed");
+        setError(data.error ?? "Не получилось удалить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -78,13 +82,13 @@ export function TransactionReceipts({ transactionId, receipts, canUpload }: Prop
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >
-        Receipts{receipts.length > 0 ? ` (${receipts.length})` : ""}
+        Чеки{receipts.length > 0 ? ` (${receipts.length})` : ""}
       </Button>
 
       {open ? (
         <div className="grid gap-2 rounded-lg border border-border p-3 text-sm">
           {receipts.length === 0 ? (
-            <p className="text-muted-foreground">No receipts attached.</p>
+            <p className="text-muted-foreground">Чеков пока нет.</p>
           ) : (
             <ul className="grid gap-1">
               {receipts.map((receipt) => (
@@ -110,7 +114,7 @@ export function TransactionReceipts({ transactionId, receipts, canUpload }: Prop
                         disabled={pending}
                         onClick={() => void remove(receipt.id)}
                       >
-                        Remove
+                        Удалить
                       </Button>
                     ) : null}
                   </span>
@@ -122,7 +126,7 @@ export function TransactionReceipts({ transactionId, receipts, canUpload }: Prop
           {canUpload ? (
             <label className="grid gap-1">
               <span className="text-muted-foreground">
-                Attach JPEG, PNG, WebP, HEIC or PDF (max 8 MB)
+                Прикрепи JPEG, PNG, WebP, HEIC или PDF (до 8 МБ)
               </span>
               <input
                 ref={inputRef}
@@ -138,7 +142,7 @@ export function TransactionReceipts({ transactionId, receipts, canUpload }: Prop
             </label>
           ) : null}
 
-          {pending ? <p className="text-muted-foreground">Working…</p> : null}
+          {pending ? <p className="text-muted-foreground">Минутку…</p> : null}
           {error ? (
             <p className="text-destructive" role="alert">
               {error}

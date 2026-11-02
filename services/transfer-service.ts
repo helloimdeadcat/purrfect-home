@@ -44,7 +44,7 @@ export async function createTransfer(
   input: CreateTransferInput,
 ): Promise<{ data: TransferRow | null; error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { data: null, error: err("FORBIDDEN", "Viewers cannot create transfers") };
+    return { data: null, error: err("FORBIDDEN", "Наблюдатели не могут делать переводы") };
   }
 
   const { data: accounts, error: accountsError } = await supabase
@@ -63,7 +63,7 @@ export async function createTransfer(
   if (!from || !to || !from.is_active || !to.is_active) {
     return {
       data: null,
-      error: err("VALIDATION", "Both accounts must exist and be active"),
+      error: err("VALIDATION", "Оба счёта должны существовать и быть активными"),
     };
   }
 
@@ -107,7 +107,7 @@ export async function createTransfer(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create transfer"),
+      error: err("DB", error?.message ?? "Не получилось сделать перевод"),
     };
   }
 

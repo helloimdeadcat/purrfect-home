@@ -28,7 +28,7 @@ export function LogoutButton() {
       disabled={pending}
       onClick={onLogout}
     >
-      {pending ? "Signing out…" : "Sign out"}
+      {pending ? "Выходим…" : "Выйти"}
     </Button>
   );
 }

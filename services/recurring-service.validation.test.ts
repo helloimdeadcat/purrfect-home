@@ -90,7 +90,7 @@ describe("recurring create validation", () => {
       currency: "USD",
     });
     expect(error?.code).toBe("VALIDATION");
-    expect(error?.message).toMatch(/currency/i);
+    expect(error?.message).toMatch(/валют/i);
   });
 
   it("rejects category type mismatch for income template", async () => {
@@ -106,6 +106,6 @@ describe("recurring create validation", () => {
       type: "income",
     });
     expect(error?.code).toBe("VALIDATION");
-    expect(error?.message).toMatch(/category type/i);
+    expect(error?.message).toMatch(/тип категории/i);
   });
 });

@@ -18,7 +18,7 @@ export async function GET(request: Request) {
       to: params.get("to") ?? undefined,
     });
     const { data, error } = await getAgenda(auth.value.supabase, auth.value.ctx, range);
-    if (error || !data) return fromServiceError(error ?? { code: "DB", message: "Failed" });
+    if (error || !data) return fromServiceError(error ?? { code: "DB", message: "Не получилось загрузить" });
 
     return Response.json({ agenda: data.agenda, today: data.today });
   } catch (error) {

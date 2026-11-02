@@ -37,6 +37,24 @@ function err(code: ServiceError["code"], message: string): ServiceError {
   return { code, message };
 }
 
+/** The SQL function raises English messages; show them in Russian. */
+const GOAL_RPC_MESSAGES: Record<string, string> = {
+  "Not authenticated": "Нужно войти в аккаунт",
+  "Invalid operation type": "Неизвестный тип операции",
+  "Amount must be non-negative": "Сумма не может быть отрицательной",
+  "Goal not found": "Цель не найдена",
+  Forbidden: "Нет доступа",
+  "Cannot modify an archived goal": "Архивную цель менять нельзя",
+  "Deposit amount must be greater than zero": "Сумма пополнения должна быть больше нуля",
+  "Withdraw amount must be greater than zero": "Сумма снятия должна быть больше нуля",
+  "Insufficient goal balance": "На цели недостаточно денег",
+  "Goal balance cannot be negative": "Баланс цели не может быть отрицательным",
+};
+
+function translateGoalRpcMessage(message: string): string {
+  return GOAL_RPC_MESSAGES[message] ?? message;
+}
+
 function withProgress(goal: GoalRow): GoalWithProgress {
   return {
     ...goal,
@@ -91,7 +109,7 @@ export async function getGoal(
     return { data: null, error: err("DB", error.message) };
   }
   if (!data) {
-    return { data: null, error: err("NOT_FOUND", "Goal not found") };
+    return { data: null, error: err("NOT_FOUND", "Цель не найдена") };
   }
 
   return { data: withProgress(data), error: null };
@@ -113,7 +131,7 @@ export async function listGoalOperations(
     return { data: null, error: err("DB", goalError.message) };
   }
   if (!goal) {
-    return { data: null, error: err("NOT_FOUND", "Goal not found") };
+    return { data: null, error: err("NOT_FOUND", "Цель не найдена") };
   }
 
   const { data, error } = await supabase
@@ -139,7 +157,7 @@ export async function createGoal(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot create goals"),
+      error: err("FORBIDDEN", "Наблюдатели не могут создавать цели"),
     };
   }
 
@@ -171,7 +189,7 @@ export async function createGoal(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create goal"),
+      error: err("DB", error?.message ?? "Не получилось создать цель"),
     };
   }
 
@@ -189,7 +207,7 @@ export async function updateGoal(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot update goals"),
+      error: err("FORBIDDEN", "Наблюдатели не могут менять цели"),
     };
   }
 
@@ -204,7 +222,7 @@ export async function updateGoal(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Goal not found") };
+    return { data: null, error: err("NOT_FOUND", "Цель не найдена") };
   }
 
   const patch: Database["public"]["Tables"]["goals"]["Update"] = {};
@@ -232,7 +250,7 @@ export async function updateGoal(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update goal"),
+      error: err("DB", error?.message ?? "Не получилось обновить цель"),
     };
   }
 
@@ -251,7 +269,7 @@ export async function applyGoalOperation(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot modify goal balances"),
+      error: err("FORBIDDEN", "Наблюдатели не могут менять баланс целей"),
     };
   }
 
@@ -267,19 +285,19 @@ export async function applyGoalOperation(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Goal not found") };
+    return { data: null, error: err("NOT_FOUND", "Цель не найдена") };
   }
   if (existing.is_archived) {
     return {
       data: null,
-      error: err("VALIDATION", "Cannot modify an archived goal"),
+      error: err("VALIDATION", "Архивную цель менять нельзя"),
     };
   }
 
   if (input.type !== "adjust" && input.amount === "0.00") {
     return {
       data: null,
-      error: err("VALIDATION", "Amount must be greater than zero"),
+      error: err("VALIDATION", "Сумма должна быть больше нуля"),
     };
   }
 
@@ -308,7 +326,7 @@ export async function applyGoalOperation(
       const code = message.includes("Forbidden") ? "FORBIDDEN" : "VALIDATION";
       return {
         data: null,
-        error: err(code, message.replace(/^.*?: /, "")),
+        error: err(code, translateGoalRpcMessage(message.replace(/^.*?: /, ""))),
       };
     }
     // Fallback only when the RPC itself is missing (migration not applied).
@@ -317,7 +335,7 @@ export async function applyGoalOperation(
     if (rpcError.code === "PGRST202" || rpcError.code === "42883") {
       return applyGoalOperationLegacy(supabase, ctx, goalId, input);
     }
-    return { data: null, error: err("DB", "Could not apply operation") };
+    return { data: null, error: err("DB", "Не получилось провести операцию") };
   }
 
   const row = (Array.isArray(rpcData) ? rpcData[0] : rpcData) as {
@@ -327,7 +345,7 @@ export async function applyGoalOperation(
 
   const refreshed = await getGoal(supabase, ctx, goalId);
   if (refreshed.error || !refreshed.data) {
-    return { data: null, error: refreshed.error ?? err("DB", "Goal missing after operation") };
+    return { data: null, error: refreshed.error ?? err("DB", "Цель пропала после операции") };
   }
 
   return {
@@ -360,12 +378,12 @@ async function applyGoalOperationLegacy(
     return { data: null, error: err("DB", goalError.message) };
   }
   if (!goal) {
-    return { data: null, error: err("NOT_FOUND", "Goal not found") };
+    return { data: null, error: err("NOT_FOUND", "Цель не найдена") };
   }
   if (goal.is_archived) {
     return {
       data: null,
-      error: err("VALIDATION", "Cannot modify an archived goal"),
+      error: err("VALIDATION", "Архивную цель менять нельзя"),
     };
   }
 
@@ -375,15 +393,15 @@ async function applyGoalOperationLegacy(
 
   if (input.type === "deposit") {
     if (amount <= BigInt(0)) {
-      return { data: null, error: err("VALIDATION", "Deposit amount must be greater than zero") };
+      return { data: null, error: err("VALIDATION", "Сумма пополнения должна быть больше нуля") };
     }
     newBalance = formatMoney(current + amount);
   } else if (input.type === "withdraw") {
     if (amount <= BigInt(0)) {
-      return { data: null, error: err("VALIDATION", "Withdraw amount must be greater than zero") };
+      return { data: null, error: err("VALIDATION", "Сумма снятия должна быть больше нуля") };
     }
     if (amount > current) {
-      return { data: null, error: err("VALIDATION", "Insufficient goal balance") };
+      return { data: null, error: err("VALIDATION", "На цели недостаточно денег") };
     }
     newBalance = formatMoney(current - amount);
   } else {
@@ -403,7 +421,7 @@ async function applyGoalOperationLegacy(
   if (updateError || !updated) {
     return {
       data: null,
-      error: err("DB", updateError?.message ?? "Failed to update goal"),
+      error: err("DB", updateError?.message ?? "Не получилось обновить цель"),
     };
   }
 
@@ -425,7 +443,7 @@ async function applyGoalOperationLegacy(
   if (opError || !op) {
     return {
       data: null,
-      error: err("DB", opError?.message ?? "Failed to record operation"),
+      error: err("DB", opError?.message ?? "Не получилось записать операцию"),
     };
   }
 
@@ -442,7 +460,7 @@ export async function deleteGoal(
 ): Promise<{ error: ServiceError | null }> {
   if (!canAdmin(ctx.role)) {
     return {
-      error: err("FORBIDDEN", "Only owners and admins can delete goals"),
+      error: err("FORBIDDEN", "Удалять цели могут только владельцы и админы"),
     };
   }
 
@@ -457,7 +475,7 @@ export async function deleteGoal(
     return { error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { error: err("NOT_FOUND", "Goal not found") };
+    return { error: err("NOT_FOUND", "Цель не найдена") };
   }
 
   const { error } = await supabase

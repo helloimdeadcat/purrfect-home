@@ -18,7 +18,23 @@ export function jsonError(
 }
 
 export function fromZodError(error: ZodError) {
-  return jsonError(400, "Validation failed", error.flatten());
+  return jsonError(400, "Проверь введённые данные", error.flatten());
+}
+
+/** Supabase Auth replies in English; show the common cases in Russian. */
+const AUTH_MESSAGES: [match: string, text: string][] = [
+  ["invalid login credentials", "Неверная почта или пароль"],
+  ["email not confirmed", "Почта ещё не подтверждена — проверь письмо"],
+  ["user already registered", "Эта почта уже зарегистрирована — попробуй войти"],
+  ["password should be at least", "Пароль слишком короткий"],
+  ["rate limit", "Слишком много попыток — подожди немного и попробуй снова"],
+  ["invalid email", "Введи корректную почту"],
+  ["signups not allowed", "Регистрация сейчас закрыта"],
+];
+
+export function translateAuthMessage(message: string): string {
+  const lower = message.toLowerCase();
+  return AUTH_MESSAGES.find(([match]) => lower.includes(match))?.[1] ?? message;
 }
 
 export function fromAuthServiceError(error: AuthServiceError) {

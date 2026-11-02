@@ -16,29 +16,29 @@ type Props = {
 export function ExportTransactionsForm({ defaultFrom, defaultTo, currencies }: Props) {
   return (
     <details className="card-soft px-4 py-3">
-      <summary className="cursor-pointer text-sm font-medium">Export to CSV</summary>
+      <summary className="cursor-pointer text-sm font-medium">Экспорт CSV</summary>
       <form
         action="/api/export/transactions"
         method="get"
         className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end"
       >
         <div className="grid gap-1">
-          <Label htmlFor="export-from">From</Label>
+          <Label htmlFor="export-from">С</Label>
           <Input id="export-from" name="from" type="date" defaultValue={defaultFrom} required />
         </div>
         <div className="grid gap-1">
-          <Label htmlFor="export-to">To</Label>
+          <Label htmlFor="export-to">По</Label>
           <Input id="export-to" name="to" type="date" defaultValue={defaultTo} required />
         </div>
         <div className="grid gap-1">
-          <Label htmlFor="export-currency">Currency</Label>
+          <Label htmlFor="export-currency">Валюта</Label>
           <select
             id="export-currency"
             name="currency"
             defaultValue=""
             className="h-9 rounded-md border border-input bg-transparent px-3 text-sm"
           >
-            <option value="">All currencies</option>
+            <option value="">Все валюты</option>
             {currencies.map((code) => (
               <option key={code} value={code}>
                 {code}
@@ -47,11 +47,11 @@ export function ExportTransactionsForm({ defaultFrom, defaultTo, currencies }: P
           </select>
         </div>
         <button type="submit" className={cn(buttonVariants({ size: "sm" }))}>
-          Download
+          Скачать
         </button>
         <p className="text-xs text-muted-foreground sm:col-span-4">
-          Deleted transactions and transfers are not included. Amounts stay in
-          their own currency (no conversion).
+          Удалённые операции и переводы не попадут в файл. Суммы остаются
+          в своей валюте (без конвертации).
         </p>
       </form>
     </details>

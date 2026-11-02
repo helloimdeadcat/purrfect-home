@@ -368,7 +368,7 @@ describe("notifications and audit log", () => {
       await scalar<string>(
         `SELECT message FROM public.notifications WHERE user_id = '${OWNER}' AND type = 'recurring_paid'`,
       ),
-    ).toMatch(/confirmed Rent \(700\.00 EUR, due 2026-10-01\)/);
+    ).toMatch(/оплачено «Rent» \(700\.00 EUR, срок 2026-10-01\)/);
   });
 
   it("users read only their own notifications and may only toggle is_read", async () => {
@@ -500,7 +500,7 @@ describe("tasks and schedule", () => {
       await scalar<string>(
         `SELECT message FROM public.notifications WHERE user_id = '${OWNER}' AND type = 'task_assigned'`,
       ),
-    ).toMatch(/assigned you: Vacuum/);
+    ).toMatch(/добавляет тебе: Vacuum/);
   });
 
   it("rejects malformed repeats and events without time", async () => {
@@ -661,7 +661,7 @@ describe("habits", () => {
       await scalar<string>(
         `SELECT message FROM public.notifications WHERE user_id = '${MEMBER}' AND type = 'habit_streak'`,
       ),
-    ).toMatch(/"Water" for 7 days in a row/);
+    ).toMatch(/«Water» уже 7 дней подряд/);
     expect(
       await scalar<number>(
         `SELECT count(*)::int FROM public.notifications WHERE user_id = '${OWNER}' AND type = 'habit_streak'`,

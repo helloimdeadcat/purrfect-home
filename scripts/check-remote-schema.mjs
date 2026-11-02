@@ -34,6 +34,10 @@ const PROBES = [
   ["20261026160000 tasks & schedule", "GET", "tasks?select=id&limit=1"],
   ["20261026170000 habits", "GET", "habits?select=id&limit=1"],
   ["20261026180000 meal plans", "GET", "meal_plans?select=id&limit=1"],
+  ["20261027110000 ai usage", "GET", "ai_usage?select=id&limit=1"],
+  ["20261027120000 push", "GET", "push_subscriptions?select=id&limit=1"],
+  ["20261027120000 push", "GET", "notifications?select=pushed_at&limit=1"],
+  ["20261027130000 retention", "POST", "rpc/cleanup_expired_data"],
 ];
 
 let missing = 0;

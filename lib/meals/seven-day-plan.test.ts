@@ -90,7 +90,7 @@ describe("nutrition helpers", () => {
     expect(rangeStatus(140, 130, 160)).toBe("within");
     expect(rangeStatus(170, 130, 160)).toBe("above");
     expect(rangeStatus(170, null, null)).toBe("none");
-    expect(formatGrams(2150)).toBe("2.15 kg");
-    expect(formatGrams(85)).toBe("85 g");
+    expect(formatGrams(2150)).toBe("2,15 кг");
+    expect(formatGrams(85)).toBe("85 г");
   });
 });

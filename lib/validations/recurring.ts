@@ -9,7 +9,7 @@ const moneyPositiveSchema = z
     const raw =
       typeof value === "number" ? value : value.trim();
     if (raw === "" || (typeof raw === "string" && raw.length === 0)) {
-      ctx.addIssue({ code: "custom", message: "Amount is required" });
+      ctx.addIssue({ code: "custom", message: "Укажи сумму" });
       return z.NEVER;
     }
     try {
@@ -17,7 +17,7 @@ const moneyPositiveSchema = z
       if (normalized.startsWith("-") || normalized === "0.00") {
         ctx.addIssue({
           code: "custom",
-          message: "Amount must be greater than zero",
+          message: "Сумма должна быть больше нуля",
         });
         return z.NEVER;
       }
@@ -25,7 +25,7 @@ const moneyPositiveSchema = z
     } catch {
       ctx.addIssue({
         code: "custom",
-        message: "Enter a valid amount with up to 2 decimals",
+        message: "Введи корректную сумму (не больше 2 знаков после запятой)",
       });
       return z.NEVER;
     }
@@ -34,7 +34,7 @@ const moneyPositiveSchema = z
 const dateSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД");
 
 const optionalDateSchema = z
   .union([dateSchema, z.literal(""), z.null()])
@@ -55,7 +55,7 @@ export const recurringFrequencySchema = z.enum([
 
 export const createRecurringSchema = z
   .object({
-    name: z.string().trim().min(1, "Name is required").max(120),
+    name: z.string().trim().min(1, "Укажи название").max(120),
     type: z.enum(["expense", "income"]),
     amount: moneyPositiveSchema,
     currency: z.string().trim().length(3).toUpperCase().optional(),
@@ -81,14 +81,14 @@ export const createRecurringSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["intervalDays"],
-        message: "Interval in days is required for custom frequency",
+        message: "Для своей периодичности укажи интервал в днях",
       });
     }
     if (data.endDate && data.endDate < data.startDate) {
       ctx.addIssue({
         code: "custom",
         path: ["endDate"],
-        message: "End date must be on or after start date",
+        message: "Дата окончания не может быть раньше даты начала",
       });
     }
   });
@@ -112,7 +112,7 @@ export const updateRecurringSchema = z
   })
   .refine(
     (value) => Object.values(value).some((entry) => entry !== undefined),
-    { message: "No changes provided" },
+    { message: "Нет изменений" },
   );
 
 const optionalNotesSchema = z

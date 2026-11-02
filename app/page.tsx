@@ -5,35 +5,35 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 const FEATURES = [
-  { title: "Money together", text: "Shared budgets, bills on time and what's safe to spend." },
-  { title: "Who does what", text: "One schedule and to-do list for both of you, with repeats." },
-  { title: "Little routines", text: "Habits and meal plans you can keep up — side by side." },
+  { title: "Деньги вместе", text: "Общие бюджеты, счета вовремя и сколько можно потратить." },
+  { title: "Кто что делает", text: "Одно расписание и список дел на двоих, с повторами." },
+  { title: "Маленькие ритуалы", text: "Привычки и меню, которые легко поддерживать — бок о бок." },
 ];
 
 export default function HomePage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-4 py-12">
       <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-6 text-center">
-        <CatCouple className="w-64 sm:w-72" title="Two cats sitting together, tails forming a heart" />
+        <CatCouple className="w-64 sm:w-72" title="Два котика сидят рядышком, хвосты складываются в сердечко" />
         <p className="flex items-center gap-1.5 text-sm font-semibold tracking-wide text-primary uppercase">
           <Heart className="size-4" /> Purrfect Home
         </p>
         <h1 className="text-4xl font-semibold text-balance sm:text-5xl">
-          Life for two, made cozy
+          Жизнь на двоих — уютно
         </h1>
         <p className="text-base text-muted-foreground text-pretty sm:text-lg">
-          Money, chores, plans and routines in one calm little place — built
-          for couples.
+          Деньги, домашние дела, планы и ритуалы в одном спокойном местечке —
+          специально для пар.
         </p>
         <div className="flex flex-wrap items-center justify-center gap-3 pt-1">
           <Link href="/register" className={cn(buttonVariants({ size: "lg" }), "px-6")}>
-            Get started
+            Начать
           </Link>
           <Link
             href="/login"
             className={cn(buttonVariants({ variant: "outline", size: "lg" }), "px-6")}
           >
-            Sign in
+            Войти
           </Link>
         </div>
         <ul className="mt-4 grid w-full gap-3 text-left sm:grid-cols-3">

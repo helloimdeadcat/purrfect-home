@@ -46,7 +46,9 @@ const HISTORY_DAYS = 400;
 /** Days shown in each person's strip. */
 export const STRIP_DAYS = 7;
 
-export function rowToRules(row: HabitRow): HabitRules {
+export function rowToRules(
+  row: Pick<HabitRow, "frequency" | "weekdays" | "times_per_week" | "goal_kind" | "target" | "unit" | "start_date">,
+): HabitRules {
   const frequency: HabitFrequency =
     row.frequency === "days"
       ? { kind: "days", weekdays: row.weekdays ?? [] }
@@ -189,7 +191,7 @@ export async function createHabit(
   ctx: HouseholdContext,
   input: CreateHabitInput,
 ): Promise<{ data: HabitRow | null; error: ServiceError | null }> {
-  if (!canWrite(ctx.role)) return { data: null, error: err("FORBIDDEN", "Viewers cannot add habits") };
+  if (!canWrite(ctx.role)) return { data: null, error: err("FORBIDDEN", "Наблюдатели не могут добавлять привычки") };
   const startDate = input.startDate ?? (await getHouseholdToday(supabase, ctx)).today;
 
   const { data, error } = await supabase
@@ -205,7 +207,7 @@ export async function createHabit(
     })
     .select("*")
     .single();
-  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Failed to add habit") };
+  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Не получилось добавить привычку") };
   return { data, error: null };
 }
 
@@ -221,7 +223,7 @@ async function loadHabit(
     .eq("household_id", ctx.householdId)
     .maybeSingle();
   if (error) return { data: null, error: err("DB", error.message) };
-  if (!data) return { data: null, error: err("NOT_FOUND", "Habit not found") };
+  if (!data) return { data: null, error: err("NOT_FOUND", "Привычка не найдена") };
   return { data, error: null };
 }
 
@@ -231,7 +233,7 @@ export async function updateHabit(
   habitId: string,
   input: UpdateHabitInput,
 ): Promise<{ data: HabitRow | null; error: ServiceError | null }> {
-  if (!canWrite(ctx.role)) return { data: null, error: err("FORBIDDEN", "Viewers cannot edit habits") };
+  if (!canWrite(ctx.role)) return { data: null, error: err("FORBIDDEN", "Наблюдатели не могут менять привычки") };
   const existing = await loadHabit(supabase, ctx, habitId);
   if (existing.error || !existing.data) return existing;
   const current = rowToRules(existing.data);
@@ -252,7 +254,7 @@ export async function updateHabit(
     .eq("household_id", ctx.householdId)
     .select("*")
     .single();
-  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Failed to update habit") };
+  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Не получилось сохранить привычку") };
   return { data, error: null };
 }
 
@@ -261,11 +263,11 @@ export async function deleteHabit(
   ctx: HouseholdContext,
   habitId: string,
 ): Promise<{ error: ServiceError | null }> {
-  if (!canWrite(ctx.role)) return { error: err("FORBIDDEN", "Viewers cannot delete habits") };
+  if (!canWrite(ctx.role)) return { error: err("FORBIDDEN", "Наблюдатели не могут удалять привычки") };
   const existing = await loadHabit(supabase, ctx, habitId);
   if (existing.error || !existing.data) return { error: existing.error };
   if (!canAdmin(ctx.role) && existing.data.created_by !== ctx.user.id) {
-    return { error: err("FORBIDDEN", "Only the creator or an owner/admin can delete this habit") };
+    return { error: err("FORBIDDEN", "Удалить эту привычку может только автор или владелец/админ") };
   }
   const { error } = await supabase.from("habits").delete().eq("id", habitId).eq("household_id", ctx.householdId);
   if (error) return { error: err("DB", error.message) };
@@ -279,17 +281,17 @@ export async function setHabitCheckin(
   habitId: string,
   input: HabitCheckinInput,
 ): Promise<{ error: ServiceError | null }> {
-  if (!canWrite(ctx.role)) return { error: err("FORBIDDEN", "Viewers cannot check in") };
+  if (!canWrite(ctx.role)) return { error: err("FORBIDDEN", "Наблюдатели не могут отмечать привычки") };
   const existing = await loadHabit(supabase, ctx, habitId);
   if (existing.error || !existing.data) return { error: existing.error };
   const habit = existing.data;
 
   if (habit.owner_member_id && habit.owner_member_id !== ctx.membershipId) {
-    return { error: err("FORBIDDEN", "This habit belongs to your partner") };
+    return { error: err("FORBIDDEN", "Это привычка твоего партнёра") };
   }
   const { today } = await getHouseholdToday(supabase, ctx);
   if (!canCheckIn(input.date, today) || input.date < habit.start_date) {
-    return { error: err("VALIDATION", "You can check in for today and the last 7 days") };
+    return { error: err("VALIDATION", "Отмечать можно сегодня и за последние 7 дней") };
   }
 
   if (!input.value) {

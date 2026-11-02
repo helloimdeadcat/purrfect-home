@@ -15,12 +15,12 @@ type CreateInviteResponse = {
 
 function readErrorMessage(error: unknown): string {
   if (error instanceof TypeError) {
-    return "Network error — check your connection and try again";
+    return "Ошибка сети — проверь подключение и попробуй ещё раз";
   }
   if (error instanceof Error && error.message) {
     return error.message;
   }
-  return "Something went wrong while creating the invitation";
+  return "Что-то пошло не так при создании приглашения";
 }
 
 export function InviteMemberForm() {
@@ -54,14 +54,14 @@ export function InviteMemberForm() {
       } catch {
         setError(
           response.ok
-            ? "Invitation may have been created, but the response was unreadable. Refresh the page."
-            : "Server returned an invalid response",
+            ? "Приглашение, возможно, создано, но ответ не удалось прочитать. Обнови страницу."
+            : "Сервер вернул некорректный ответ",
         );
         return;
       }
 
       if (!response.ok) {
-        setError(data.error ?? "Failed to create invitation");
+        setError(data.error ?? "Не получилось создать приглашение");
         return;
       }
 
@@ -94,15 +94,14 @@ export function InviteMemberForm() {
       onSubmit={onSubmit}
       className="grid gap-3 card-soft p-4"
     >
-      <h2 className="font-medium">Invite a member</h2>
+      <h2 className="font-medium">Пригласить участника</h2>
       <p className="text-sm text-muted-foreground">
-        Invitations always grant the member role. Email delivery is not
-        configured yet — the invite link is shown only to you after creating
-        it.
+        Приглашённый всегда получает роль «Участник». Отправка писем пока не
+        настроена — ссылку-приглашение увидишь только ты, сразу после создания.
       </p>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
         <div className="grid gap-2">
-          <Label htmlFor="invite-email">Email</Label>
+          <Label htmlFor="invite-email">Почта</Label>
           <Input
             id="invite-email"
             name="email"
@@ -113,7 +112,7 @@ export function InviteMemberForm() {
           />
         </div>
         <Button type="submit" disabled={pending}>
-          {pending ? "Creating…" : "Create invite"}
+          {pending ? "Создаём…" : "Пригласить"}
         </Button>
       </div>
       {error ? (
@@ -123,11 +122,11 @@ export function InviteMemberForm() {
       ) : null}
       {inviteUrl ? (
         <div className="rounded-lg bg-muted/50 p-3 text-sm" role="status">
-          <p className="mb-1 font-medium">Dev invite link (copy now)</p>
+          <p className="mb-1 font-medium">Ссылка-приглашение (скопируй сейчас)</p>
           <p className="break-all font-mono text-xs">{inviteUrl}</p>
           <p className="mt-2 text-muted-foreground">
-            This link contains a one-time token. It is not stored in the
-            database and will not be shown again.
+            В ссылке одноразовый токен. Он не хранится в базе и больше не
+            будет показан.
           </p>
         </div>
       ) : null}

@@ -39,13 +39,13 @@ export function buildPeople(
   const ordered = [...members].sort((a, b) => a.joined_at.localeCompare(b.joined_at));
   const list = ordered.map((member, index) => ({
     memberId: member.id,
-    label: member.display_name || member.email?.split("@")[0] || "Partner",
+    label: member.display_name || member.email?.split("@")[0] || "Партнёр",
     color: MEMBER_COLORS[index % MEMBER_COLORS.length],
     isYou: member.user_id === currentUserId,
   }));
   return {
     list,
-    together: { memberId: null, label: "Together", color: TOGETHER_COLOR, isYou: false },
+    together: { memberId: null, label: "Вместе", color: TOGETHER_COLOR, isYou: false },
     byMemberId: new Map(list.map((person) => [person.memberId, person])),
   };
 }
@@ -58,7 +58,7 @@ export function personFor(
   return (
     people.byMemberId.get(memberId) ?? {
       memberId,
-      label: "Former member",
+      label: "Бывший участник",
       color: "var(--chart-neutral)",
       isYou: false,
     }

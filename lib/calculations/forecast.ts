@@ -128,32 +128,32 @@ export function classifyForecastCandidate(
   if (event.transactionId) {
     return {
       include: false,
-      reason: "Already linked to a posted transaction (reflected in balance)",
+      reason: "Уже привязано к проведённой операции (учтено в балансе)",
     };
   }
 
   if (event.status === "paid") {
     return {
       include: false,
-      reason: "Already paid — reflected in current balance",
+      reason: "Уже оплачено — учтено в текущем балансе",
     };
   }
 
   if (event.status === "skipped") {
-    return { include: false, reason: "Skipped — not an upcoming obligation" };
+    return { include: false, reason: "Пропущено — больше не предстоит" };
   }
 
   // Past projected gaps without a materialised occurrence are ambiguous.
   if (event.source === "projected" && event.date < today) {
     return {
       include: false,
-      reason: "Past projected date without an occurrence row — ambiguous",
+      reason: "Дата уже прошла, а записи о платеже нет — непонятно, учитывать ли",
     };
   }
 
   // Future events beyond horizon
   if (event.date > horizonEnd) {
-    return { include: false, reason: "Outside selected forecast horizon" };
+    return { include: false, reason: "За пределами выбранного прогноза" };
   }
 
   // Overdue / pending materialised: include even when date < today
@@ -166,7 +166,7 @@ export function classifyForecastCandidate(
     }
     // pending scheduled after horizon already handled; overdue before today OK
     if (event.date > horizonEnd) {
-      return { include: false, reason: "Outside selected forecast horizon" };
+      return { include: false, reason: "За пределами выбранного прогноза" };
     }
   }
 
@@ -180,7 +180,7 @@ export function classifyForecastCandidate(
     if (event.date < today) {
       return {
         include: false,
-        reason: "Past projected date without an occurrence row — ambiguous",
+        reason: "Дата уже прошла, а записи о платеже нет — непонятно, учитывать ли",
       };
     }
   }
@@ -222,13 +222,13 @@ export function buildForecast(input: BuildForecastInput): BuildForecastResult {
     (value) => compareMoney(asMoney(value), zeroMoney()) > 0,
   );
   const warnings: string[] = [
-    "Safe-to-Spend is an estimate from app data, not a guarantee of financial safety.",
+    "«Можно потратить» — это оценка по данным приложения, а не гарантия финансовой безопасности.",
     ...(reserveConfigured
       ? []
-      : ["Cash reserve is not configured in settings — treated as 0.00."]),
-    "Unconfirmed income sources are not projected; only scheduled recurring income may appear as expected income.",
-    "Remaining budgets are informational and are not deducted from Safe-to-Spend (avoids double-counting with recurring).",
-    "Recurring expenses marked as optional lower the forecast balance but not Safe-to-Spend.",
+      : ["Резерв не задан в настройках — считаем его равным 0,00."]),
+    "Неподтверждённые источники дохода не прогнозируются — в ожидаемый доход попадают только регулярные поступления.",
+    "Остатки бюджетов показаны для справки и не вычитаются из «Можно потратить» (чтобы не считать дважды с регулярными платежами).",
+    "Необязательные регулярные расходы уменьшают прогноз баланса, но не «Можно потратить».",
   ];
 
   const included: ForecastIncludedEvent[] = [];

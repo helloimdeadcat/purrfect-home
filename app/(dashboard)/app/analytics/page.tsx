@@ -12,10 +12,33 @@ import { ForecastPanel } from "@/components/forecast/forecast-panel";
 import { getHouseholdContext } from "@/lib/auth/household";
 import { getSessionUser } from "@/lib/auth/session";
 import { displayMoney } from "@/lib/calculations/money";
+import { LOCALE } from "@/lib/locale";
 import { analyticsQuerySchema } from "@/lib/validations/analytics";
 import { forecastQuerySchema } from "@/lib/validations/forecast";
 import { getAnalyticsReport } from "@/services/analytics-service";
 import { getForecastReport } from "@/services/forecast-service";
+
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function formatDay(iso: string): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? iso : dayFormat.format(date);
+}
+
+function monthTitle(key: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(key);
+  if (!match) return key;
+  return new Intl.DateTimeFormat(LOCALE, {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1)));
+}
 
 type Props = {
   searchParams: Promise<{
@@ -47,9 +70,9 @@ export default async function AnalyticsPage({ searchParams }: Props) {
   if (!parsed.success) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Аналитика</h1>
         <p className="text-sm text-destructive" role="alert">
-          Invalid filters. Check period and dates.
+          Что-то не так с фильтрами. Проверь период и даты.
         </p>
       </div>
     );
@@ -70,7 +93,7 @@ export default async function AnalyticsPage({ searchParams }: Props) {
           data: null,
           error: {
             code: "VALIDATION" as const,
-            message: "Invalid forecast filters",
+            message: "Некорректные фильтры прогноза",
           },
         }),
   ]);
@@ -78,10 +101,10 @@ export default async function AnalyticsPage({ searchParams }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Аналитика 📊</h1>
         <p className="text-muted-foreground">
-          Actual income and expenses for {ctx.householdName}. Amounts stay
-          separated by currency — no FX conversion.
+          Реальные доходы и расходы: {ctx.householdName}. Суммы считаются
+          отдельно по каждой валюте — без конвертации.
         </p>
       </div>
 
@@ -111,8 +134,8 @@ export default async function AnalyticsPage({ searchParams }: Props) {
         <>
           <div className="flex flex-wrap items-center justify-between gap-2">
             <p className="text-sm text-muted-foreground">
-              {report.range.start} → {report.range.end} · {report.currency}
-              {report.empty ? " · no transactions in this period" : ""}
+              {formatDay(report.range.start)} → {formatDay(report.range.end)} · {report.currency}
+              {report.empty ? " · за этот период операций нет" : ""}
             </p>
             <a
               href={`/api/export/analytics?${new URLSearchParams({
@@ -125,41 +148,41 @@ export default async function AnalyticsPage({ searchParams }: Props) {
               className="text-sm underline-offset-4 hover:underline"
               download
             >
-              Export CSV
+              Экспорт CSV
             </a>
           </div>
 
           <section className="grid gap-3 sm:grid-cols-3">
             <StatCard
-              label="Income"
+              label="Доход"
               tone="income"
               value={displayMoney(report.summary.income, report.currency)}
               footer={
-                <ChangeBadge label="Change" change={report.summary.incomeChange} />
+                <ChangeBadge label="Изменение" change={report.summary.incomeChange} />
               }
             />
             <StatCard
-              label="Expenses"
+              label="Расходы"
               tone="expense"
               value={displayMoney(report.summary.expense, report.currency)}
               footer={
                 <ChangeBadge
-                  label="Change"
+                  label="Изменение"
                   change={report.summary.expenseChange}
                 />
               }
             />
             <StatCard
-              label="Net cash flow"
+              label="Чистое движение денег"
               value={displayMoney(report.summary.net, report.currency)}
               footer={
-                <ChangeBadge label="Change" change={report.summary.netChange} />
+                <ChangeBadge label="Изменение" change={report.summary.netChange} />
               }
             />
           </section>
 
           <section className="grid gap-3">
-            <h2 className="font-medium">Income vs expenses</h2>
+            <h2 className="font-medium">Доходы и расходы</h2>
             <IncomeExpenseChart
               series={report.cashFlow}
               currency={report.currency}
@@ -167,20 +190,20 @@ export default async function AnalyticsPage({ searchParams }: Props) {
           </section>
 
           <section className="grid gap-3">
-            <h2 className="font-medium">Cash flow</h2>
+            <h2 className="font-medium">Движение денег</h2>
             <CashFlowChart series={report.cashFlow} currency={report.currency} />
           </section>
 
           <section className="grid gap-3 lg:grid-cols-2">
             <div className="grid gap-3">
-              <h2 className="font-medium">Expenses by category</h2>
+              <h2 className="font-medium">Расходы по категориям</h2>
               <CategoryExpenseChart
                 slices={report.expensesByCategory}
                 currency={report.currency}
               />
             </div>
             <div className="grid gap-3">
-              <h2 className="font-medium">Category comparison</h2>
+              <h2 className="font-medium">Сравнение категорий</h2>
               <CategoryCompareChart
                 rows={report.categoryComparison}
                 currency={report.currency}
@@ -190,33 +213,33 @@ export default async function AnalyticsPage({ searchParams }: Props) {
 
           <section className="grid gap-3">
             <h2 className="font-medium">
-              Budgets vs spent ({report.budgets.month})
+              Бюджеты и траты ({monthTitle(report.budgets.month)})
             </h2>
             <BudgetProgressChart
               rows={report.budgets.rows}
               currency={report.currency}
-              month={report.budgets.month}
+              month={monthTitle(report.budgets.month)}
             />
           </section>
 
           <section className="grid gap-3 card-soft p-4">
-            <h2 className="font-medium">Period report</h2>
+            <h2 className="font-medium">Отчёт за период</h2>
             <ReportBlock
-              title="Expenses by category"
+              title="Расходы по категориям"
               rows={report.expensesByCategory.map((row) => ({
                 label: row.categoryName,
                 amount: displayMoney(row.amount, report.currency),
               }))}
             />
             <ReportBlock
-              title="Income by category"
+              title="Доходы по категориям"
               rows={report.incomeByCategory.map((row) => ({
                 label: row.categoryName,
                 amount: displayMoney(row.amount, report.currency),
               }))}
             />
             <ReportBlock
-              title="Income by source"
+              title="Доходы по источникам"
               rows={report.incomeBySource.map((row) => ({
                 label: row.sourceName,
                 amount: displayMoney(row.amount, report.currency),
@@ -224,23 +247,23 @@ export default async function AnalyticsPage({ searchParams }: Props) {
             />
             <div className="grid gap-1 text-sm">
               <p>
-                Prior period {report.previousRange.start} →{" "}
-                {report.previousRange.end}: income{" "}
+                Прошлый период {formatDay(report.previousRange.start)} →{" "}
+                {formatDay(report.previousRange.end)}: доход{" "}
                 {displayMoney(report.summary.previousIncome, report.currency)},
-                expenses{" "}
+                расходы{" "}
                 {displayMoney(report.summary.previousExpense, report.currency)},
-                net {displayMoney(report.summary.previousNet, report.currency)}
+                итого {displayMoney(report.summary.previousNet, report.currency)}
               </p>
             </div>
           </section>
 
           <div className="border-t border-border pt-6">
             <p className="mb-3 text-sm text-muted-foreground">
-              Actual analytics above · forecast below (separate models).
+              Выше — то, что уже было, ниже — прогноз (считаются отдельно).
             </p>
             {forecastResult.error ? (
               <p className="text-sm text-destructive" role="alert">
-                Forecast unavailable: {forecastResult.error.message}
+                Прогноз недоступен: {forecastResult.error.message}
               </p>
             ) : forecastResult.data ? (
               <ForecastPanel
@@ -272,7 +295,7 @@ function ReportBlock({
     <div className="grid gap-2">
       <h3 className="text-sm font-medium">{title}</h3>
       {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No rows.</p>
+        <p className="text-sm text-muted-foreground">Пока пусто.</p>
       ) : (
         <ul className="grid gap-1 text-sm">
           {rows.map((row) => (

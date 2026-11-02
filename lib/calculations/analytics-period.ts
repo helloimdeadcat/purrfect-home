@@ -40,10 +40,10 @@ export function daysInclusive(start: string, end: string): number {
 
 export function assertRangeWithinLimit(range: DateRange): void {
   if (range.end < range.start) {
-    throw new Error("End date must be on or after start date");
+    throw new Error("Дата окончания не может быть раньше даты начала");
   }
   if (daysInclusive(range.start, range.end) > MAX_RANGE_DAYS) {
-    throw new Error(`Date range cannot exceed ${MAX_RANGE_DAYS} days`);
+    throw new Error(`Период не может быть длиннее ${MAX_RANGE_DAYS} дней`);
   }
 }
 
@@ -88,7 +88,7 @@ export function resolveAnalyticsPeriod(
       const from = options?.from;
       const to = options?.to;
       if (!from || !to) {
-        throw new Error("Custom period requires from and to dates");
+        throw new Error("Для своего периода укажи даты «с» и «по»");
       }
       const range = { start: from, end: to };
       assertRangeWithinLimit(range);

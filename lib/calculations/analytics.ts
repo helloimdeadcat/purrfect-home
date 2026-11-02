@@ -155,8 +155,8 @@ export function aggregateByCategory(
     .map(([categoryId, amount]) => ({
       categoryId,
       categoryName: categoryId
-        ? (nameById.get(categoryId) ?? "Unknown category")
-        : "Uncategorized",
+        ? (nameById.get(categoryId) ?? "Неизвестная категория")
+        : "Без категории",
       amount,
     }))
     .sort((a, b) => compareMoney(b.amount, a.amount));
@@ -176,8 +176,8 @@ export function aggregateByIncomeSource(
     .map(([sourceId, amount]) => ({
       sourceId,
       sourceName: sourceId
-        ? (nameById.get(sourceId) ?? "Unknown source")
-        : "Unassigned",
+        ? (nameById.get(sourceId) ?? "Неизвестный источник")
+        : "Без источника",
       amount,
     }))
     .sort((a, b) => compareMoney(b.amount, a.amount));
@@ -210,7 +210,7 @@ export function compareCategoryExpenses(
         categoryName:
           current.get(categoryId)?.categoryName ??
           previous.get(categoryId)?.categoryName ??
-          "Uncategorized",
+          "Без категории",
         current: cur,
         previous: prev,
         delta: subtractMoney(cur, prev) as Money,

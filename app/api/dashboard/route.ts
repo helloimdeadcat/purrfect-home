@@ -49,7 +49,7 @@ export async function GET() {
       },
       wealth: {
         ...wealth,
-        note: "Currency conversion (FX) is not implemented. Totals are never mixed across currencies.",
+        note: "Конвертации валют пока нет. Суммы в разных валютах не складываются.",
       },
       // Backward-compatible field: base-currency total only
       netWorth: wealth.baseTotal,

@@ -26,6 +26,15 @@ function err(code: ServiceError["code"], message: string): ServiceError {
   return { code, message };
 }
 
+/** Map the accept RPC's English exception text (from SQL) to a Russian message. */
+function translateAcceptRpcMessage(message: string): string {
+  if (message.includes("expired")) return "Срок действия приглашения истёк";
+  if (message.includes("already used")) return "Приглашение уже использовано";
+  if (message.includes("no longer valid")) return "Приглашение больше не действует";
+  if (message.includes("Not authenticated")) return "Нужно войти в аккаунт";
+  return "Приглашение недействительно";
+}
+
 function isDigestRpcBroken(error: { code?: string; message?: string } | null): boolean {
   if (!error) return false;
   return (
@@ -80,7 +89,7 @@ export async function createInvitation(
   if (!canAdmin(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Only owners and admins can invite members"),
+      error: err("FORBIDDEN", "Приглашать могут только владелец и админы"),
     };
   }
 
@@ -88,7 +97,7 @@ export async function createInvitation(
   if (input.role !== "member") {
     return {
       data: null,
-      error: err("VALIDATION", "Invitations can only grant the member role"),
+      error: err("VALIDATION", "Через приглашение можно выдать только роль «Участник»"),
     };
   }
 
@@ -97,7 +106,7 @@ export async function createInvitation(
   if (ctx.user.email && ctx.user.email.toLowerCase() === email) {
     return {
       data: null,
-      error: err("VALIDATION", "You cannot invite yourself"),
+      error: err("VALIDATION", "Себя пригласить нельзя 🙂"),
     };
   }
 
@@ -120,7 +129,7 @@ export async function createInvitation(
       // Same message style — do not distinguish "exists elsewhere"
       return {
         data: null,
-        error: err("VALIDATION", "This email cannot be invited right now"),
+        error: err("VALIDATION", "Эту почту сейчас пригласить нельзя"),
       };
     }
   }
@@ -138,7 +147,7 @@ export async function createInvitation(
       message: pendingError.message,
       householdId: ctx.householdId,
     });
-    return { data: null, error: err("DB", "Could not check existing invitations") };
+    return { data: null, error: err("DB", "Не получилось проверить существующие приглашения") };
   }
 
   const now = Date.now();
@@ -168,7 +177,7 @@ export async function createInvitation(
       });
       return {
         data: null,
-        error: err("DB", "Could not refresh expired invitations"),
+        error: err("DB", "Не получилось обновить истёкшие приглашения"),
       };
     }
   }
@@ -176,7 +185,7 @@ export async function createInvitation(
   if (activePending.length > 0) {
     return {
       data: null,
-      error: err("CONFLICT", "A pending invitation already exists for this email"),
+      error: err("CONFLICT", "На эту почту уже есть активное приглашение"),
     };
   }
 
@@ -210,7 +219,7 @@ export async function createInvitation(
         data: null,
         error: err(
           "CONFLICT",
-          "A pending invitation already exists for this email",
+          "На эту почту уже есть активное приглашение",
         ),
       };
     }
@@ -222,7 +231,7 @@ export async function createInvitation(
     });
     return {
       data: null,
-      error: err("DB", "Failed to create invitation"),
+      error: err("DB", "Не получилось создать приглашение"),
     };
   }
 
@@ -245,7 +254,7 @@ export async function revokeInvitation(
   invitationId: string,
 ): Promise<{ error: ServiceError | null }> {
   if (!canAdmin(ctx.role)) {
-    return { error: err("FORBIDDEN", "Only owners and admins can revoke invitations") };
+    return { error: err("FORBIDDEN", "Отзывать приглашения могут только владелец и админы") };
   }
 
   const { data, error } = await supabase
@@ -261,7 +270,7 @@ export async function revokeInvitation(
     return { error: err("DB", error.message) };
   }
   if (!data) {
-    return { error: err("NOT_FOUND", "Pending invitation not found") };
+    return { error: err("NOT_FOUND", "Активное приглашение не найдено") };
   }
 
   return { error: null };
@@ -422,7 +431,7 @@ export async function acceptInvitation(
     } | null;
 
     if (!row?.household_id) {
-      return { data: null, error: err("VALIDATION", "Invalid invitation") };
+      return { data: null, error: err("VALIDATION", "Приглашение недействительно") };
     }
 
     return {
@@ -447,9 +456,9 @@ export async function acceptInvitation(
     message.includes("Invalid invitation") ||
     message.includes("Not authenticated")
   ) {
-    return { data: null, error: err("VALIDATION", message.replace(/^.*?: /, "")) };
+    return { data: null, error: err("VALIDATION", translateAcceptRpcMessage(message)) };
   }
-  return { data: null, error: err("DB", "Could not accept invitation") };
+  return { data: null, error: err("DB", "Не получилось принять приглашение") };
 }
 
 /**
@@ -469,10 +478,10 @@ async function acceptInvitationViaAdmin(
 }> {
   const email = user.email?.trim().toLowerCase();
   if (!email) {
-    return { data: null, error: err("VALIDATION", "Invalid invitation") };
+    return { data: null, error: err("VALIDATION", "Приглашение недействительно") };
   }
   if (!token || token.trim().length < 20) {
-    return { data: null, error: err("VALIDATION", "Invalid invitation") };
+    return { data: null, error: err("VALIDATION", "Приглашение недействительно") };
   }
 
   const admin = createAdminClient();
@@ -488,7 +497,7 @@ async function acceptInvitationViaAdmin(
     return { data: null, error: err("DB", lookupError.message) };
   }
   if (!invite) {
-    return { data: null, error: err("VALIDATION", "Invalid invitation") };
+    return { data: null, error: err("VALIDATION", "Приглашение недействительно") };
   }
 
   if (invite.status === "accepted") {
@@ -508,11 +517,11 @@ async function acceptInvitationViaAdmin(
         error: null,
       };
     }
-    return { data: null, error: err("VALIDATION", "Invitation already used") };
+    return { data: null, error: err("VALIDATION", "Приглашение уже использовано") };
   }
 
   if (invite.status !== "pending") {
-    return { data: null, error: err("VALIDATION", "Invitation is no longer valid") };
+    return { data: null, error: err("VALIDATION", "Приглашение больше не действует") };
   }
 
   if (new Date(invite.expires_at).getTime() <= Date.now()) {
@@ -521,15 +530,15 @@ async function acceptInvitationViaAdmin(
       .update({ status: "expired" })
       .eq("id", invite.id)
       .eq("status", "pending");
-    return { data: null, error: err("VALIDATION", "Invitation expired") };
+    return { data: null, error: err("VALIDATION", "Срок действия приглашения истёк") };
   }
 
   if (invite.email.toLowerCase() !== email) {
-    return { data: null, error: err("VALIDATION", "Invalid invitation") };
+    return { data: null, error: err("VALIDATION", "Приглашение недействительно") };
   }
 
   if (invite.role !== "member") {
-    return { data: null, error: err("VALIDATION", "Invalid invitation") };
+    return { data: null, error: err("VALIDATION", "Приглашение недействительно") };
   }
 
   const { data: existingMember } = await admin
@@ -577,7 +586,7 @@ async function acceptInvitationViaAdmin(
     return { data: null, error: err("DB", claimError.message) };
   }
   if (!claimed) {
-    return { data: null, error: err("VALIDATION", "Invitation already used") };
+    return { data: null, error: err("VALIDATION", "Приглашение уже использовано") };
   }
 
   const { data: member, error: memberError } = await admin
@@ -605,7 +614,7 @@ async function acceptInvitationViaAdmin(
       .eq("accepted_by", user.id);
     return {
       data: null,
-      error: err("DB", memberError?.message ?? "Could not join household"),
+      error: err("DB", memberError?.message ?? "Не получилось присоединиться к семье"),
     };
   }
 

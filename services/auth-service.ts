@@ -42,7 +42,7 @@ export async function ensureUserBootstrap(
 ): Promise<{ data: BootstrapResult | null; error: AuthServiceError | null }> {
   const email = user.email;
   if (!email) {
-    return { data: null, error: asError("BOOTSTRAP", "Authenticated user has no email") };
+    return { data: null, error: asError("BOOTSTRAP", "У аккаунта нет почты") };
   }
 
   const admin = createAdminClient();
@@ -62,7 +62,7 @@ export async function ensureUserBootstrap(
     options?.householdName?.trim() ||
     (typeof meta.household_name === "string" && meta.household_name.trim()
       ? meta.household_name.trim()
-      : "Our Family");
+      : "Наша семья");
 
   const { data, error } = await admin.rpc("bootstrap_first_household_for_user", {
     p_user_id: user.id,
@@ -89,7 +89,7 @@ export async function ensureUserBootstrap(
     }
     return {
       data: null,
-      error: asError("BOOTSTRAP", `Bootstrap failed: ${error.message}`),
+      error: asError("BOOTSTRAP", `Не получилось подготовить семью: ${error.message}`),
     };
   }
 
@@ -97,7 +97,7 @@ export async function ensureUserBootstrap(
   if (!row?.household_id || !row?.member_id) {
     return {
       data: null,
-      error: asError("BOOTSTRAP", "Bootstrap returned no household"),
+      error: asError("BOOTSTRAP", "Не получилось создать семью"),
     };
   }
 
@@ -141,7 +141,7 @@ async function legacyEnsureUserBootstrap(
   if (profileError) {
     return {
       data: null,
-      error: asError("BOOTSTRAP", `Failed to create profile: ${profileError.message}`),
+      error: asError("BOOTSTRAP", `Не получилось создать профиль: ${profileError.message}`),
     };
   }
 
@@ -158,7 +158,7 @@ async function legacyEnsureUserBootstrap(
       data: null,
       error: asError(
         "BOOTSTRAP",
-        `Failed to check household membership: ${memberLookupError.message}`,
+        `Не получилось проверить участие в семье: ${memberLookupError.message}`,
       ),
     };
   }
@@ -178,7 +178,7 @@ async function legacyEnsureUserBootstrap(
     data: null,
     error: asError(
       "BOOTSTRAP",
-      "Database migration 20261017150000_audit_security_integrity_fixes.sql is required before creating a new household. Apply it in Supabase, then sign in again.",
+      "Чтобы создать новую семью, нужна миграция базы 20261017150000_audit_security_integrity_fixes.sql. Примени её в Supabase и войди снова.",
     ),
   };
 }

@@ -67,7 +67,7 @@ export async function updateHouseholdName(
   if (!canAdmin(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Only owners and admins can rename the household"),
+      error: err("FORBIDDEN", "Переименовать семью могут только владелец и админы"),
     };
   }
 
@@ -81,7 +81,7 @@ export async function updateHouseholdName(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update household"),
+      error: err("DB", error?.message ?? "Не получилось обновить семью"),
     };
   }
 

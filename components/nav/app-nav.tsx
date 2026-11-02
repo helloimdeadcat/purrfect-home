@@ -23,7 +23,7 @@ export function AppNav({
 
   return (
     <nav
-      aria-label="Main"
+      aria-label="Главное меню"
       className={cn(
         "text-sm text-muted-foreground",
         variant === "desktop"

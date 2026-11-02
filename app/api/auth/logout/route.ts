@@ -14,7 +14,7 @@ export async function POST() {
   } catch (error) {
     return jsonError(
       500,
-      error instanceof Error ? error.message : "Logout failed",
+      error instanceof Error ? error.message : "Не получилось выйти",
     );
   }
 }

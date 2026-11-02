@@ -47,10 +47,10 @@ export default async function BudgetsPage({ searchParams }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Budgets</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Бюджеты</h1>
         <p className="text-muted-foreground">
-          Monthly spending limits by category for {ctx.householdName}. Limits
-          use {ctx.currency}; transfers are not expenses.
+          Месячные лимиты расходов по категориям для «{ctx.householdName}».
+          Лимиты в {ctx.currency}; переводы расходами не считаются.
         </p>
       </div>
 
@@ -64,7 +64,7 @@ export default async function BudgetsPage({ searchParams }: Props) {
 
       <section className="grid gap-3">
         {budgets.length === 0 ? (
-          <EmptyState title="No budgets this month">Set a monthly limit for a category to keep spending cozy.</EmptyState>
+          <EmptyState title="В этом месяце бюджетов нет">Задай месячный лимит для категории — и траты будут под контролем 🐱</EmptyState>
         ) : (
           budgets.map((budget) => (
             <BudgetCard
@@ -87,8 +87,8 @@ export default async function BudgetsPage({ searchParams }: Props) {
         />
       ) : (
         <p className="text-sm text-muted-foreground">
-          You can view household budgets. Ask an owner or member to create or
-          edit them.
+          Ты можешь только смотреть бюджеты семьи. Создавать и изменять их
+          могут владелец или участник.
         </p>
       )}
     </div>

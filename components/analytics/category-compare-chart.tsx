@@ -15,6 +15,7 @@ import { ChartEmpty } from "@/components/analytics/chart-empty";
 import {
   axisTick,
   legendText,
+  numberTick,
   tooltipContentStyle,
   tooltipLabelStyle,
 } from "@/components/analytics/chart-theme";
@@ -30,7 +31,7 @@ export function CategoryCompareChart({ rows, currency }: Props) {
   const top = rows.slice(0, 8);
   if (top.length === 0) {
     return (
-      <ChartEmpty message="No category comparison data for these periods." />
+      <ChartEmpty message="Нет данных для сравнения категорий за эти периоды." />
     );
   }
 
@@ -44,7 +45,7 @@ export function CategoryCompareChart({ rows, currency }: Props) {
     <div
       className="h-80 w-full"
       role="img"
-      aria-label="Category expenses compared to previous period"
+      aria-label="Расходы по категориям в сравнении с прошлым периодом"
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
@@ -53,7 +54,7 @@ export function CategoryCompareChart({ rows, currency }: Props) {
           margin={{ top: 8, right: 16, left: 8, bottom: 0 }}
         >
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-          <XAxis type="number" tick={axisTick} />
+          <XAxis type="number" tick={axisTick} tickFormatter={numberTick} />
           <YAxis
             type="category"
             dataKey="name"
@@ -65,19 +66,19 @@ export function CategoryCompareChart({ rows, currency }: Props) {
             labelStyle={tooltipLabelStyle}
             formatter={(value, name) => [
               displayMoney(Number(value ?? 0).toFixed(2), currency),
-              name === "current" ? "Current" : "Previous",
+              name,
             ]}
           />
           <Legend formatter={legendText} />
-          <Bar dataKey="previous" name="Previous" fill="var(--chart-neutral)" radius={[0, 4, 4, 0]} />
-          <Bar dataKey="current" name="Current" fill="var(--expense-mark)" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="previous" name="Раньше" fill="var(--chart-neutral)" radius={[0, 4, 4, 0]} />
+          <Bar dataKey="current" name="Сейчас" fill="var(--expense-mark)" radius={[0, 4, 4, 0]} />
         </BarChart>
       </ResponsiveContainer>
       <ul className="sr-only">
         {top.map((row) => (
           <li key={`${row.categoryId}-${row.categoryName}`}>
-            {row.categoryName}: current {displayMoney(row.current, currency)},
-            previous {displayMoney(row.previous, currency)}
+            {row.categoryName}: сейчас {displayMoney(row.current, currency)},
+            раньше {displayMoney(row.previous, currency)}
           </li>
         ))}
       </ul>

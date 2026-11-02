@@ -14,6 +14,10 @@
 --   20261026160000_tasks_schedule.sql
 --   20261026170000_habits.sql
 --   20261026180000_meal_plans.sql
+--   20261027100000_russian_db_texts.sql
+--   20261027110000_ai_usage_quota.sql
+--   20261027120000_push_subscriptions.sql
+--   20261027130000_retention_cleanup.sql
 
 -- =====================================================================
 -- 20261018180000_settings_reference_data.sql
@@ -1589,6 +1593,887 @@ BEGIN
       t || '_write_member', t);
   END LOOP;
 END $$;
+
+COMMIT;
+
+
+-- =====================================================================
+-- 20261027100000_russian_db_texts.sql
+-- =====================================================================
+-- Russian texts written by the database.
+--
+-- The UI speaks Russian (informal «ты»); this migration makes the texts the
+-- database writes itself match it:
+--   * notification titles/messages from triggers (membership, recurring
+--     payments, task assignment, habit streaks) + the member_label fallback;
+--   * the household bootstrap defaults ('Наша семья', 'Наличные');
+--   * the global default category templates (seed.sql rows) that the
+--     bootstrap copies into every new household.
+-- Function bodies are copied from their latest definitions; only text
+-- literals change. RAISE EXCEPTION texts stay English on purpose — services
+-- map them by exact value. The 'Superseded by schedule change' note is
+-- matched by services/recurring-service.ts and stays as is.
+--
+-- Existing rows: untouched default categories and notification titles are
+-- translated in place (see section 4). Re-runnable.
+
+BEGIN;
+
+-- ---------------------------------------------------------------------------
+-- 1) Notification helpers and triggers
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.member_label(p_household_id uuid, p_user_id uuid)
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT coalesce(
+    nullif(trim(hm.display_name), ''),
+    nullif(trim(concat_ws(' ', p.first_name, p.last_name)), ''),
+    split_part(p.email, '@', 1),
+    'Кто-то'
+  )
+  FROM (SELECT 1) AS one
+  LEFT JOIN public.household_members hm
+    ON hm.household_id = p_household_id AND hm.user_id = p_user_id
+  LEFT JOIN public.profiles p ON p.id = p_user_id;
+$$;
+
+REVOKE ALL ON FUNCTION public.member_label(uuid, uuid) FROM PUBLIC;
+
+CREATE OR REPLACE FUNCTION public.audit_household_members()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_name text;
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    PERFORM public.write_audit(NEW.household_id, 'member', NEW.id, 'member_joined',
+      NULL, jsonb_build_object('user_id', NEW.user_id, 'role', NEW.role));
+    v_name := public.member_label(NEW.household_id, NEW.user_id);
+    -- The joining user is not auth.uid() for admin-client inserts, so
+    -- exclude them explicitly.
+    INSERT INTO public.notifications (user_id, household_id, type, title, message, link)
+    SELECT hm.user_id, NEW.household_id, 'member_joined',
+      'Новый участник семьи', v_name || ' теперь с вами в семье 🏡', '/app/family'
+    FROM public.household_members hm
+    WHERE hm.household_id = NEW.household_id
+      AND hm.user_id <> NEW.user_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'UPDATE' THEN
+    IF NEW.role IS DISTINCT FROM OLD.role THEN
+      PERFORM public.write_audit(NEW.household_id, 'member', NEW.id, 'member_role_changed',
+        jsonb_build_object('role', OLD.role), jsonb_build_object('role', NEW.role));
+      PERFORM public.notify_household(NEW.household_id, 'member_role_changed',
+        'Твоя роль изменилась',
+        'Теперь твоя роль: ' || CASE NEW.role
+          WHEN 'owner' THEN 'владелец'
+          WHEN 'admin' THEN 'админ'
+          WHEN 'member' THEN 'участник'
+          WHEN 'viewer' THEN 'наблюдатель'
+          ELSE NEW.role
+        END || '.', '/app/family', NEW.user_id);
+    END IF;
+    RETURN NEW;
+  ELSE
+    PERFORM public.write_audit(OLD.household_id, 'member', OLD.id, 'member_removed',
+      jsonb_build_object('user_id', OLD.user_id, 'role', OLD.role), NULL);
+    RETURN OLD;
+  END IF;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.audit_recurring_occurrence()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_payment public.recurring_payments%ROWTYPE;
+  v_who text;
+  v_amount numeric;
+BEGIN
+  IF NEW.status IS NOT DISTINCT FROM OLD.status
+     OR NEW.status NOT IN ('paid', 'skipped') THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT * INTO v_payment FROM public.recurring_payments rp WHERE rp.id = NEW.recurring_payment_id;
+  v_amount := coalesce(NEW.amount, v_payment.amount);
+
+  PERFORM public.write_audit(NEW.household_id, 'recurring_occurrence', NEW.id,
+    'recurring_' || NEW.status,
+    jsonb_build_object('status', OLD.status),
+    jsonb_build_object('status', NEW.status, 'payment', v_payment.name,
+      'scheduled_date', NEW.scheduled_date, 'amount', v_amount, 'currency', v_payment.currency));
+
+  -- Schedule edits mark old slots skipped in bulk; don't notify for those.
+  IF NEW.status = 'skipped' AND NEW.notes = 'Superseded by schedule change' THEN
+    RETURN NEW;
+  END IF;
+
+  v_who := public.member_label(NEW.household_id, auth.uid());
+  PERFORM public.notify_household(NEW.household_id, 'recurring_' || NEW.status,
+    CASE WHEN NEW.status = 'paid' THEN 'Регулярный платёж оплачен' ELSE 'Регулярный платёж пропущен' END,
+    v_who || CASE WHEN NEW.status = 'paid' THEN ': оплачено ' ELSE ': пропущено ' END
+      || coalesce('«' || v_payment.name || '»', 'платёж') || ' (' || to_char(v_amount, 'FM999999999990.00')
+      || ' ' || coalesce(v_payment.currency, '') || ', срок ' || NEW.scheduled_date || ').',
+    '/app/recurring');
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.notify_task_assignment()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_assignee uuid;
+BEGIN
+  IF NEW.assignee_member_id IS NULL
+     OR (TG_OP = 'UPDATE' AND NEW.assignee_member_id IS NOT DISTINCT FROM OLD.assignee_member_id) THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT hm.user_id INTO v_assignee
+  FROM public.household_members hm WHERE hm.id = NEW.assignee_member_id;
+
+  IF v_assignee IS NOT NULL AND v_assignee IS DISTINCT FROM auth.uid() THEN
+    PERFORM public.notify_household(
+      NEW.household_id,
+      'task_assigned',
+      CASE WHEN NEW.kind = 'event' THEN 'Новое в твоём расписании' ELSE 'Новое дело для тебя' END,
+      public.member_label(NEW.household_id, auth.uid()) || ' добавляет тебе: ' || NEW.title
+        || coalesce(' (' || to_char(NEW.start_date, 'YYYY-MM-DD') || ')', ''),
+      CASE WHEN NEW.kind = 'event' THEN '/app/schedule' ELSE '/app/tasks' END,
+      v_assignee
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.notify_habit_milestone()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_habit public.habits%ROWTYPE;
+  v_streak integer := 0;
+  v_day date := NEW.checkin_date;
+BEGIN
+  SELECT * INTO v_habit FROM public.habits h WHERE h.id = NEW.habit_id;
+  IF v_habit.frequency <> 'daily' OR NEW.value < v_habit.target THEN
+    RETURN NEW;
+  END IF;
+  -- Updating today's amount again (2.5 L after 2 L) must not cheer twice.
+  IF TG_OP = 'UPDATE' AND OLD.value >= v_habit.target THEN
+    RETURN NEW;
+  END IF;
+  -- Only count a streak that ends on the day just checked in.
+  WHILE v_streak < 366 AND EXISTS (
+    SELECT 1 FROM public.habit_checkins c
+    WHERE c.habit_id = NEW.habit_id AND c.member_id = NEW.member_id
+      AND c.checkin_date = v_day AND c.value >= v_habit.target
+  ) LOOP
+    v_streak := v_streak + 1;
+    v_day := v_day - 1;
+  END LOOP;
+
+  -- 7, 30, 100 and 365 all take the plural «дней».
+  IF v_streak IN (7, 30, 100, 365) THEN
+    PERFORM public.notify_household(
+      NEW.household_id,
+      'habit_streak',
+      'Серия: ' || v_streak || ' дней подряд 🎉',
+      public.member_label(NEW.household_id, auth.uid()) || ' держит «' || v_habit.title || '» уже '
+        || v_streak || ' дней подряд. Поддержи!',
+      '/app/habits'
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- ---------------------------------------------------------------------------
+-- 2) Household bootstrap defaults (household name, cash account)
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.bootstrap_first_household_for_user(
+  p_user_id uuid,
+  p_email text,
+  p_first_name text,
+  p_last_name text,
+  p_household_name text,
+  p_currency text
+)
+RETURNS TABLE (household_id uuid, member_id uuid, created boolean)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_household_id uuid;
+  v_member_id uuid;
+  v_currency text := upper(coalesce(nullif(trim(p_currency), ''), 'EUR'));
+  v_household_name text := coalesce(nullif(trim(p_household_name), ''), 'Наша семья');
+  v_display_name text;
+  v_existing public.household_members%ROWTYPE;
+  cat record;
+  id_map jsonb := '{}'::jsonb;
+  new_cat_id uuid;
+  parent_new_id uuid;
+BEGIN
+  IF p_user_id IS NULL OR auth.uid() IS DISTINCT FROM p_user_id THEN
+    -- Allow service_role (auth.uid() null) OR the authenticated user themselves
+    IF auth.uid() IS NOT NULL AND auth.uid() IS DISTINCT FROM p_user_id THEN
+      RAISE EXCEPTION 'Not allowed to bootstrap another user';
+    END IF;
+  END IF;
+
+  IF auth.uid() IS NULL AND current_user NOT IN ('postgres', 'supabase_admin') THEN
+    -- service_role connects as a role that bypasses RLS; still require explicit user id
+    NULL;
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_user_id::text, 0));
+
+  SELECT * INTO v_existing
+  FROM public.household_members hm
+  WHERE hm.user_id = p_user_id
+  ORDER BY hm.joined_at ASC
+  LIMIT 1;
+
+  IF FOUND THEN
+    household_id := v_existing.household_id;
+    member_id := v_existing.id;
+    created := false;
+    RETURN NEXT;
+    RETURN;
+  END IF;
+
+  INSERT INTO public.profiles (id, email, first_name, last_name, currency)
+  VALUES (p_user_id, p_email, p_first_name, p_last_name, v_currency)
+  ON CONFLICT (id) DO UPDATE
+    SET email = EXCLUDED.email,
+        first_name = COALESCE(EXCLUDED.first_name, public.profiles.first_name),
+        last_name = COALESCE(EXCLUDED.last_name, public.profiles.last_name),
+        currency = EXCLUDED.currency,
+        updated_at = timezone('utc', now());
+
+  INSERT INTO public.households (name, base_currency)
+  VALUES (v_household_name, v_currency)
+  RETURNING id INTO v_household_id;
+
+  v_display_name := nullif(trim(concat_ws(' ', p_first_name, p_last_name)), '');
+  IF v_display_name IS NULL THEN
+    v_display_name := p_email;
+  END IF;
+
+  INSERT INTO public.household_members (household_id, user_id, role, display_name)
+  VALUES (v_household_id, p_user_id, 'owner', v_display_name)
+  RETURNING id INTO v_member_id;
+
+  FOR cat IN
+    SELECT c.*
+    FROM public.categories c
+    WHERE c.is_system = true AND c.household_id IS NULL
+    ORDER BY CASE WHEN c.parent_id IS NULL THEN 0 ELSE 1 END, c.sort_order
+  LOOP
+    new_cat_id := gen_random_uuid();
+    id_map := id_map || jsonb_build_object(cat.id::text, new_cat_id::text);
+    parent_new_id := NULL;
+    IF cat.parent_id IS NOT NULL THEN
+      parent_new_id := (id_map ->> cat.parent_id::text)::uuid;
+    END IF;
+
+    INSERT INTO public.categories (
+      id, household_id, name, icon, color, type, parent_id,
+      is_system, sort_order, is_active
+    ) VALUES (
+      new_cat_id, v_household_id, cat.name, cat.icon, cat.color, cat.type,
+      parent_new_id, false, cat.sort_order, cat.is_active
+    );
+  END LOOP;
+
+  INSERT INTO public.household_settings (
+    household_id, base_currency, timezone, week_starts_on, month_starts_on
+  ) VALUES (
+    v_household_id, v_currency, 'UTC', 1, 1
+  );
+
+  INSERT INTO public.accounts (
+    household_id, owner_member_id, name, type, currency,
+    initial_balance, is_shared, is_active, icon, color
+  ) VALUES (
+    v_household_id, v_member_id, 'Наличные', 'cash', v_currency,
+    0, true, true, 'wallet', '#22C55E'
+  );
+
+  household_id := v_household_id;
+  member_id := v_member_id;
+  created := true;
+  RETURN NEXT;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.bootstrap_first_household_for_user(uuid, text, text, text, text, text) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.bootstrap_first_household_for_user(uuid, text, text, text, text, text)
+  TO authenticated, service_role;
+
+-- ---------------------------------------------------------------------------
+-- 3) Default categories. The bootstrap copies the global templates
+--    (household_id IS NULL, is_system = true, from seed.sql), so translating
+--    the templates translates every new household. Household copies are
+--    renamed only while they still look untouched (exact English name, same
+--    type and icon as the template) and the Russian name is still free.
+-- ---------------------------------------------------------------------------
+WITH russian_default_categories (name_en, name_ru, type, icon) AS (
+  VALUES
+  ('Housing', 'Жильё', 'expense', 'home'),
+  ('Food', 'Еда', 'expense', 'utensils'),
+  ('Transport', 'Транспорт', 'expense', 'car'),
+  ('Health', 'Здоровье', 'expense', 'heart-pulse'),
+  ('Shopping', 'Покупки', 'expense', 'shopping-bag'),
+  ('Entertainment', 'Развлечения', 'expense', 'clapperboard'),
+  ('Subscriptions', 'Подписки', 'expense', 'repeat'),
+  ('Utilities', 'Коммуналка', 'expense', 'zap'),
+  ('Insurance', 'Страховка', 'expense', 'shield'),
+  ('Other Expense', 'Прочие расходы', 'expense', 'circle-ellipsis'),
+  ('Groceries', 'Продукты', 'expense', 'shopping-cart'),
+  ('Restaurants', 'Кафе и рестораны', 'expense', 'utensils-crossed'),
+  ('Salary', 'Зарплата', 'income', 'briefcase'),
+  ('Freelance', 'Фриланс', 'income', 'laptop'),
+  ('Other Income', 'Прочие доходы', 'income', 'plus-circle')
+),
+candidates AS (
+  SELECT DISTINCT ON (c.household_id, m.name_ru) c.id, m.name_ru
+  FROM public.categories c
+  JOIN russian_default_categories m
+    ON c.name = m.name_en AND c.type = m.type AND c.icon = m.icon
+  WHERE (
+      (c.household_id IS NULL AND c.is_system = true)
+      OR (c.household_id IS NOT NULL AND c.is_system = false)
+    )
+    AND NOT EXISTS (
+      SELECT 1 FROM public.categories d
+      WHERE d.household_id IS NOT DISTINCT FROM c.household_id
+        AND lower(d.name) = lower(m.name_ru)
+    )
+  ORDER BY c.household_id, m.name_ru, c.created_at, c.id
+)
+UPDATE public.categories c
+SET name = candidates.name_ru
+FROM candidates
+WHERE c.id = candidates.id;
+
+-- ---------------------------------------------------------------------------
+-- 4) Existing notifications. Fixed titles are mapped exactly; streak titles
+--    and the two membership messages are rebuilt by pattern. Messages that
+--    embed payment/task/habit names (recurring_*, task_assigned,
+--    habit_streak) stay as they were written.
+-- ---------------------------------------------------------------------------
+UPDATE public.notifications n
+SET title = CASE
+    WHEN n.title = 'New family member' THEN 'Новый участник семьи'
+    WHEN n.title = 'Your role changed' THEN 'Твоя роль изменилась'
+    WHEN n.title = 'Recurring payment confirmed' THEN 'Регулярный платёж оплачен'
+    WHEN n.title = 'Recurring payment skipped' THEN 'Регулярный платёж пропущен'
+    WHEN n.title = 'Added to your schedule' THEN 'Новое в твоём расписании'
+    WHEN n.title = 'New to-do for you' THEN 'Новое дело для тебя'
+    WHEN n.title ~ '^Streak: [0-9]+ days 🎉$'
+      THEN regexp_replace(n.title, '^Streak: ([0-9]+) days 🎉$', 'Серия: \1 дней подряд 🎉')
+    ELSE n.title
+  END,
+  message = CASE
+    WHEN n.type = 'member_joined' AND n.message ~ ' joined the household\.$'
+      THEN regexp_replace(n.message, ' joined the household\.$', ' теперь с вами в семье 🏡')
+    WHEN n.type = 'member_role_changed' AND n.message ~ '^Your role is now [a-z]+\.$'
+      THEN 'Теперь твоя роль: ' || CASE substring(n.message FROM '^Your role is now ([a-z]+)\.$')
+          WHEN 'owner' THEN 'владелец'
+          WHEN 'admin' THEN 'админ'
+          WHEN 'member' THEN 'участник'
+          WHEN 'viewer' THEN 'наблюдатель'
+          ELSE substring(n.message FROM '^Your role is now ([a-z]+)\.$')
+        END || '.'
+    ELSE n.message
+  END
+WHERE n.title IN (
+    'New family member', 'Your role changed', 'Recurring payment confirmed',
+    'Recurring payment skipped', 'Added to your schedule', 'New to-do for you'
+  )
+  OR n.title ~ '^Streak: [0-9]+ days 🎉$';
+
+COMMIT;
+
+
+-- =====================================================================
+-- 20261027110000_ai_usage_quota.sql
+-- =====================================================================
+-- AI usage quota shared by every server instance (the in-memory limiter
+-- was per Vercel instance, so it did not really protect the free Gemini
+-- quota). One row per AI request; take_ai_quota() checks the per-user
+-- window and daily limits, records the hit and prunes rows older than two
+-- days, so the table never grows past a few hundred rows.
+-- Re-runnable.
+
+BEGIN;
+
+CREATE TABLE IF NOT EXISTS public.ai_usage (
+  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  kind text NOT NULL CHECK (kind IN ('assistant', 'receipt_scan')),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS ai_usage_user_created_idx
+  ON public.ai_usage (user_id, created_at DESC);
+
+-- No policies: only take_ai_quota() (SECURITY DEFINER) touches the table.
+ALTER TABLE public.ai_usage ENABLE ROW LEVEL SECURITY;
+REVOKE ALL ON public.ai_usage FROM anon, authenticated;
+
+CREATE OR REPLACE FUNCTION public.take_ai_quota(
+  p_kind text,
+  p_window_seconds integer,
+  p_window_limit integer,
+  p_daily_limit integer
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_user uuid := auth.uid();
+  v_in_window integer;
+  v_today integer;
+BEGIN
+  IF v_user IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '42501';
+  END IF;
+  IF p_kind NOT IN ('assistant', 'receipt_scan') THEN
+    RAISE EXCEPTION 'Unknown AI usage kind' USING ERRCODE = '22023';
+  END IF;
+
+  -- Serialise concurrent requests of the same user so two tabs cannot both
+  -- squeeze past the limit.
+  PERFORM pg_advisory_xact_lock(hashtext('ai_usage:' || v_user::text));
+
+  DELETE FROM public.ai_usage
+  WHERE user_id = v_user AND created_at < now() - interval '2 days';
+
+  SELECT
+    count(*) FILTER (WHERE created_at > now() - make_interval(secs => p_window_seconds)),
+    count(*) FILTER (WHERE created_at > now() - interval '1 day')
+  INTO v_in_window, v_today
+  FROM public.ai_usage
+  WHERE user_id = v_user;
+
+  IF v_in_window >= p_window_limit OR v_today >= p_daily_limit THEN
+    RETURN false;
+  END IF;
+
+  INSERT INTO public.ai_usage (user_id, kind) VALUES (v_user, p_kind);
+  RETURN true;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.take_ai_quota(text, integer, integer, integer) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.take_ai_quota(text, integer, integer, integer) TO authenticated;
+
+COMMIT;
+
+
+-- =====================================================================
+-- 20261027120000_push_subscriptions.sql
+-- =====================================================================
+-- Web Push notifications on the phone.
+--
+--   * push_subscriptions: one row per browser/device push endpoint. A user
+--     sees, adds and removes only their own rows; at most 5 devices per user
+--     (the least recently used ones are dropped by a trigger).
+--   * notifications.pushed_at: set once a notification was handed to the
+--     push dispatcher. Existing rows are back-filled so old notifications are
+--     never pushed. claim_notification_pushes() (service role only) marks a
+--     batch pushed atomically and returns it, so two concurrent dispatchers
+--     can never send the same notification twice.
+-- Re-runnable.
+
+BEGIN;
+
+-- ---------------------------------------------------------------------------
+-- 1) Subscriptions
+-- ---------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS public.push_subscriptions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES auth.users (id) ON DELETE CASCADE,
+  endpoint text NOT NULL UNIQUE
+    CHECK (endpoint LIKE 'https://%' AND char_length(endpoint) <= 1024),
+  p256dh text NOT NULL CHECK (char_length(p256dh) BETWEEN 1 AND 256),
+  auth text NOT NULL CHECK (char_length(auth) BETWEEN 1 AND 128),
+  user_agent text CHECK (user_agent IS NULL OR char_length(user_agent) <= 200),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  last_used_at timestamptz
+);
+
+CREATE INDEX IF NOT EXISTS push_subscriptions_user_idx
+  ON public.push_subscriptions (user_id);
+
+ALTER TABLE public.push_subscriptions ENABLE ROW LEVEL SECURITY;
+
+REVOKE ALL ON public.push_subscriptions FROM anon, authenticated;
+GRANT SELECT, INSERT, DELETE ON public.push_subscriptions TO authenticated;
+GRANT ALL ON public.push_subscriptions TO service_role;
+
+DROP POLICY IF EXISTS push_subscriptions_select_own ON public.push_subscriptions;
+CREATE POLICY push_subscriptions_select_own
+  ON public.push_subscriptions FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
+
+DROP POLICY IF EXISTS push_subscriptions_insert_own ON public.push_subscriptions;
+CREATE POLICY push_subscriptions_insert_own
+  ON public.push_subscriptions FOR INSERT TO authenticated
+  WITH CHECK (user_id = auth.uid());
+
+DROP POLICY IF EXISTS push_subscriptions_delete_own ON public.push_subscriptions;
+CREATE POLICY push_subscriptions_delete_own
+  ON public.push_subscriptions FOR DELETE TO authenticated
+  USING (user_id = auth.uid());
+
+-- Keep at most 5 devices per user: drop the least recently used extras.
+CREATE OR REPLACE FUNCTION public.cap_push_subscriptions()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  DELETE FROM public.push_subscriptions ps
+  WHERE ps.user_id = NEW.user_id
+    AND ps.id IN (
+      SELECT s.id
+      FROM public.push_subscriptions s
+      WHERE s.user_id = NEW.user_id
+      ORDER BY greatest(s.created_at, coalesce(s.last_used_at, s.created_at)) DESC, s.id DESC
+      OFFSET 5
+    );
+  RETURN NULL;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.cap_push_subscriptions() FROM PUBLIC;
+
+DROP TRIGGER IF EXISTS push_subscriptions_cap ON public.push_subscriptions;
+CREATE TRIGGER push_subscriptions_cap
+  AFTER INSERT OR UPDATE OF user_id ON public.push_subscriptions
+  FOR EACH ROW
+  EXECUTE PROCEDURE public.cap_push_subscriptions();
+
+-- Save (or move) the caller's subscription. A browser endpoint belongs to
+-- whoever subscribed last on that device, so an endpoint previously stored
+-- for another account on a shared phone is re-assigned instead of failing
+-- on the UNIQUE constraint (which RLS would hide from the caller).
+CREATE OR REPLACE FUNCTION public.save_push_subscription(
+  p_endpoint text,
+  p_p256dh text,
+  p_auth text,
+  p_user_agent text
+)
+RETURNS uuid
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_user uuid := auth.uid();
+  v_id uuid;
+BEGIN
+  IF v_user IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated' USING ERRCODE = '42501';
+  END IF;
+
+  INSERT INTO public.push_subscriptions (user_id, endpoint, p256dh, auth, user_agent)
+  VALUES (v_user, p_endpoint, p_p256dh, p_auth, left(p_user_agent, 200))
+  ON CONFLICT (endpoint) DO UPDATE
+    SET user_id = EXCLUDED.user_id,
+        p256dh = EXCLUDED.p256dh,
+        auth = EXCLUDED.auth,
+        user_agent = EXCLUDED.user_agent,
+        created_at = now(),
+        last_used_at = NULL
+  RETURNING id INTO v_id;
+
+  RETURN v_id;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.save_push_subscription(text, text, text, text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.save_push_subscription(text, text, text, text) TO authenticated;
+
+-- ---------------------------------------------------------------------------
+-- 2) notifications.pushed_at
+-- ---------------------------------------------------------------------------
+-- Back-fill only when the column is created, so that re-running the
+-- migration never swallows pushes that are legitimately pending.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'notifications'
+      AND column_name = 'pushed_at'
+  ) THEN
+    ALTER TABLE public.notifications ADD COLUMN pushed_at timestamptz;
+    -- Old notifications are never pushed.
+    UPDATE public.notifications SET pushed_at = created_at;
+  END IF;
+END;
+$$;
+
+CREATE INDEX IF NOT EXISTS notifications_unpushed_idx
+  ON public.notifications (household_id, created_at)
+  WHERE pushed_at IS NULL;
+
+-- Clients may still flip only is_read (pushed_at is dispatcher-owned).
+CREATE OR REPLACE FUNCTION public.guard_notification_update()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF current_user = 'authenticated' AND (
+    NEW.user_id IS DISTINCT FROM OLD.user_id
+    OR NEW.household_id IS DISTINCT FROM OLD.household_id
+    OR NEW.type IS DISTINCT FROM OLD.type
+    OR NEW.title IS DISTINCT FROM OLD.title
+    OR NEW.message IS DISTINCT FROM OLD.message
+    OR NEW.link IS DISTINCT FROM OLD.link
+    OR NEW.created_at IS DISTINCT FROM OLD.created_at
+    OR NEW.pushed_at IS DISTINCT FROM OLD.pushed_at
+  ) THEN
+    RAISE EXCEPTION 'Only is_read can be changed on a notification'
+      USING ERRCODE = '42501';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- Claim a batch of fresh, not-yet-pushed notifications of one household.
+-- Rows older than p_max_age are marked pushed without being returned (too
+-- stale to buzz a phone about). FOR UPDATE SKIP LOCKED + UPDATE … RETURNING
+-- makes concurrent dispatchers split the work instead of double-sending.
+CREATE OR REPLACE FUNCTION public.claim_notification_pushes(
+  p_household_id uuid,
+  p_limit integer DEFAULT 20,
+  p_max_age interval DEFAULT interval '1 hour'
+)
+RETURNS TABLE (
+  id uuid,
+  user_id uuid,
+  type text,
+  title text,
+  message text,
+  link text,
+  created_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  UPDATE public.notifications n
+  SET pushed_at = now()
+  WHERE n.household_id = p_household_id
+    AND n.pushed_at IS NULL
+    AND n.created_at < now() - p_max_age;
+
+  RETURN QUERY
+  WITH picked AS (
+    SELECT n.id
+    FROM public.notifications n
+    WHERE n.household_id = p_household_id
+      AND n.pushed_at IS NULL
+    ORDER BY n.created_at
+    LIMIT greatest(1, least(coalesce(p_limit, 20), 100))
+    FOR UPDATE SKIP LOCKED
+  )
+  UPDATE public.notifications n
+  SET pushed_at = now()
+  FROM picked
+  WHERE n.id = picked.id
+  RETURNING n.id, n.user_id, n.type, n.title, n.message, n.link, n.created_at;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.claim_notification_pushes(uuid, integer, interval) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_notification_pushes(uuid, integer, interval) TO service_role;
+
+COMMIT;
+
+
+-- =====================================================================
+-- 20261027130000_retention_cleanup.sql
+-- =====================================================================
+-- Retention cleanup — keeps the Supabase Free tier (500 MB DB, 1 GB Storage)
+-- from filling up with data nobody looks at any more. Called once a day by
+-- the server cron through services/maintenance-service.ts (service role).
+--
+--   * cleanup_expired_data()            — row retention, returns counts;
+--   * list_purgeable_receipt_files(n)   — receipt files the cron must remove
+--     through the Storage API first (SQL cannot delete Storage objects
+--     properly), after which the cron deletes the receipt rows itself;
+--   * household_receipt_usage(id)       — cheap size/count for the upload
+--     budget guard and the «Использование» card (RLS applies).
+--
+-- Real financial data is never touched: only transactions that were
+-- soft-deleted long ago (and have no receipts or recurring links left) are
+-- purged; accounts, goals, budgets and live transactions are not read here.
+-- Re-runnable.
+
+BEGIN;
+
+-- ---------------------------------------------------------------------------
+-- 1) Row retention
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.cleanup_expired_data()
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_notifications_read integer;
+  v_notifications_old integer;
+  v_audit integer;
+  v_invitations integer;
+  v_transactions integer;
+BEGIN
+  -- Read notifications are history after two months; anything older than
+  -- half a year (read or not) is stale.
+  DELETE FROM public.notifications
+  WHERE is_read AND created_at < now() - interval '60 days';
+  GET DIAGNOSTICS v_notifications_read = ROW_COUNT;
+
+  DELETE FROM public.notifications
+  WHERE created_at < now() - interval '180 days';
+  GET DIAGNOSTICS v_notifications_old = ROW_COUNT;
+
+  -- The activity log is only shown to owners/admins as recent history;
+  -- nothing references audit rows.
+  DELETE FROM public.audit_logs
+  WHERE created_at < now() - interval '365 days';
+  GET DIAGNOSTICS v_audit = ROW_COUNT;
+
+  -- Finished invitations (revoked/expired, or pending past expiry) can't be
+  -- used any more. Accepted ones stay as a record of who joined.
+  DELETE FROM public.household_invitations
+  WHERE (status IN ('revoked', 'expired') AND updated_at < now() - interval '30 days')
+     OR (status = 'pending' AND expires_at < now() - interval '30 days');
+  GET DIAGNOSTICS v_invitations = ROW_COUNT;
+
+  -- Transactions soft-deleted more than 90 days ago. Rows that still have
+  -- receipts wait until the cron has removed the files (a cascade would
+  -- orphan them in Storage); rows still linked from a recurring occurrence
+  -- are kept so payment history stays intact. The deletion itself remains
+  -- in audit_logs (transaction_deleted) for a year.
+  DELETE FROM public.transactions t
+  WHERE t.deleted_at IS NOT NULL
+    AND t.deleted_at < now() - interval '90 days'
+    AND NOT EXISTS (SELECT 1 FROM public.receipts r WHERE r.transaction_id = t.id)
+    AND NOT EXISTS (
+      SELECT 1 FROM public.recurring_payment_occurrences o WHERE o.transaction_id = t.id
+    );
+  GET DIAGNOSTICS v_transactions = ROW_COUNT;
+
+  RETURN jsonb_build_object(
+    'notifications_read', v_notifications_read,
+    'notifications_old', v_notifications_old,
+    'audit_logs', v_audit,
+    'invitations', v_invitations,
+    'deleted_transactions', v_transactions
+  );
+END;
+$$;
+
+-- Supabase grants EXECUTE on new public functions to anon/authenticated by
+-- default privileges, so revoke from them explicitly, not just PUBLIC.
+REVOKE ALL ON FUNCTION public.cleanup_expired_data() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.cleanup_expired_data() TO service_role;
+
+-- ---------------------------------------------------------------------------
+-- 2) Receipt files to remove via the Storage API
+-- ---------------------------------------------------------------------------
+-- Returns (receipt_id, storage_path):
+--   * receipts of transactions soft-deleted more than 30 days ago
+--     (receipt_id set — the cron deletes the row after the file);
+--   * objects in the receipts bucket without a receipts row, older than a
+--     day (receipt_id NULL) — left behind by a failed upload cleanup or a
+--     hard-deleted transaction/household.
+-- plpgsql (late-bound) on purpose: storage.objects belongs to Supabase.
+CREATE OR REPLACE FUNCTION public.list_purgeable_receipt_files(p_limit integer DEFAULT 100)
+RETURNS TABLE (receipt_id uuid, storage_path text)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_limit integer := least(greatest(coalesce(p_limit, 100), 1), 1000);
+BEGIN
+  RETURN QUERY
+  SELECT r.id, r.storage_path
+  FROM public.receipts r
+  JOIN public.transactions t ON t.id = r.transaction_id
+  WHERE t.deleted_at IS NOT NULL
+    AND t.deleted_at < now() - interval '30 days'
+  ORDER BY t.deleted_at
+  LIMIT v_limit;
+
+  IF FOUND THEN
+    RETURN;
+  END IF;
+
+  RETURN QUERY
+  SELECT NULL::uuid, o.name
+  FROM storage.objects o
+  WHERE o.bucket_id = 'receipts'
+    AND o.created_at < now() - interval '1 day'
+    AND NOT EXISTS (SELECT 1 FROM public.receipts r WHERE r.storage_path = o.name)
+  ORDER BY o.created_at
+  LIMIT v_limit;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.list_purgeable_receipt_files(integer) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.list_purgeable_receipt_files(integer) TO service_role;
+
+-- ---------------------------------------------------------------------------
+-- 3) Household receipt usage (invoker rights: RLS limits it to members)
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.household_receipt_usage(p_household_id uuid)
+RETURNS TABLE (files bigint, bytes bigint)
+LANGUAGE sql
+STABLE
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $$
+  SELECT count(*)::bigint, coalesce(sum(r.file_size), 0)::bigint
+  FROM public.receipts r
+  WHERE r.household_id = p_household_id;
+$$;
+
+REVOKE ALL ON FUNCTION public.household_receipt_usage(uuid) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.household_receipt_usage(uuid) TO authenticated, service_role;
 
 COMMIT;
 

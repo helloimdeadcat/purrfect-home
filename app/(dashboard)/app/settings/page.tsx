@@ -4,6 +4,7 @@ import { CategoriesSettings } from "@/components/settings/categories-settings";
 import { HouseholdSettingsForm } from "@/components/settings/household-settings-form";
 import { IncomeSourcesSettings } from "@/components/settings/income-sources-settings";
 import { ProfileSettingsForm } from "@/components/settings/profile-settings-form";
+import { PushNotificationsSettings } from "@/components/settings/push-notifications-settings";
 import { TagsSettings } from "@/components/settings/tags-settings";
 import {
   canAdmin,
@@ -11,7 +12,9 @@ import {
   getHouseholdContext,
 } from "@/lib/auth/household";
 import { getSessionUser } from "@/lib/auth/session";
-import { listAccountsWithBalances } from "@/services/account-service";
+import { getVapidPublicKey } from "@/lib/push/config";
+import { UsageCard } from "@/components/settings/usage-card";
+import { listAccounts } from "@/services/account-service";
 import { listCategories } from "@/services/category-service";
 import { listIncomeSources } from "@/services/income-source-service";
 import {
@@ -43,7 +46,7 @@ export default async function SettingsPage() {
     listCategories(supabase, ctx, { includeInactive: true }),
     listTags(supabase, ctx, { includeInactive: true }),
     listIncomeSources(supabase, ctx, { includeInactive: true }),
-    listAccountsWithBalances(supabase, ctx),
+    listAccounts(supabase, ctx),
   ]);
 
   const loadError =
@@ -71,10 +74,10 @@ export default async function SettingsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Настройки</h1>
         <p className="text-muted-foreground">
-          Profile, household preferences, and reference data for{" "}
-          {ctx.householdName}.
+          Профиль, настройки семьи и справочники для{" "}
+          «{ctx.householdName}».
         </p>
       </div>
 
@@ -93,6 +96,8 @@ export default async function SettingsPage() {
           currency={profile.currency}
         />
       ) : null}
+
+      <PushNotificationsSettings publicKey={getVapidPublicKey()} />
 
       {settings ? (
         <HouseholdSettingsForm
@@ -119,8 +124,8 @@ export default async function SettingsPage() {
         />
       ) : (
         <p className="text-sm text-muted-foreground">
-          Household settings row is missing — re-run bootstrap or create it in
-          Supabase.
+          Не найдены настройки семьи — запусти bootstrap заново или создай
+          запись в Supabase.
         </p>
       )}
 
@@ -138,6 +143,8 @@ export default async function SettingsPage() {
         canManage={manage}
         canArchive={admin}
       />
+
+      {admin ? <UsageCard supabase={supabase} ctx={ctx} /> : null}
     </div>
   );
 }

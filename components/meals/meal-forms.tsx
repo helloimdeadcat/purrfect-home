@@ -13,6 +13,14 @@ import type { ShoppingCategory, WeighMode } from "@/types/database";
 const SELECT_CLASS =
   "h-9 w-full rounded-lg border border-input bg-card px-2.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
+const NUTRIENT_LABEL = {
+  kcal: "ккал",
+  protein: "белки, г",
+  fat: "жиры, г",
+  carbs: "углеводы, г",
+  fiber: "клетчатка, г",
+} as const;
+
 async function send(url: string, method: string, body?: unknown): Promise<string | null> {
   const response = await fetch(url, {
     method,
@@ -25,7 +33,7 @@ async function send(url: string, method: string, body?: unknown): Promise<string
     details?: { fieldErrors?: Record<string, string[]>; formErrors?: string[] };
   };
   const field = data.details?.fieldErrors ? Object.values(data.details.fieldErrors).flat()[0] : data.details?.formErrors?.[0];
-  return field ?? data.error ?? "Couldn't save";
+  return field ?? data.error ?? "Не получилось сохранить";
 }
 
 function useAction() {
@@ -65,21 +73,21 @@ export function ImportPlanPanel({ people }: { people: { memberId: string; label:
   return (
     <section className="card-soft grid gap-4 p-4">
       <div>
-        <h2 className="font-semibold">Load your 7-day plan</h2>
+        <h2 className="font-semibold">Загрузи свой план на 7 дней</h2>
         <p className="text-sm text-muted-foreground">
-          28 meals with grams for each of you, daily calorie and protein/fat
-          targets, weighing rules and cooking tips — all editable afterwards.
+          28 блюд с граммовками для каждого из вас, дневные цели по калориям,
+          белкам и жирам, правила взвешивания и советы по готовке — всё можно потом изменить.
         </p>
       </div>
       {people.length < 2 ? (
         <p className="text-sm text-muted-foreground">
-          Invite your partner on the Family page first — the plan has portions for two.
+          Сначала пригласи партнёра на странице «Семья» — в плане порции на двоих.
         </p>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-1.5">
-              <Label htmlFor="plan-husband">«Муж» column is</Label>
+              <Label htmlFor="plan-husband">Столбец «Муж» — это</Label>
               <select id="plan-husband" value={husband} onChange={(e) => setHusband(e.target.value)} className={SELECT_CLASS}>
                 {people.map((p) => (
                   <option key={p.memberId} value={p.memberId}>
@@ -89,7 +97,7 @@ export function ImportPlanPanel({ people }: { people: { memberId: string; label:
               </select>
             </div>
             <div className="grid gap-1.5">
-              <Label htmlFor="plan-wife">«Жена» column is</Label>
+              <Label htmlFor="plan-wife">Столбец «Жена» — это</Label>
               <select id="plan-wife" value={wife} onChange={(e) => setWife(e.target.value)} className={SELECT_CLASS}>
                 {people.map((p) => (
                   <option key={p.memberId} value={p.memberId}>
@@ -102,8 +110,8 @@ export function ImportPlanPanel({ people }: { people: { memberId: string; label:
           <label className="flex items-start gap-2 text-sm">
             <input type="checkbox" checked={habits} onChange={(e) => setHabits(e.target.checked)} className="mt-0.5" />
             <span>
-              Also add the plan&apos;s habits: water (2.25 L / 1.75 L), steps
-              (starting at 2 500) and strength training on Mon &amp; Thu.
+              Добавить и привычки из плана: вода (2,25 л / 1,75 л), шаги
+              (от 2 500 в день) и силовые по Пн и Чт.
             </span>
           </label>
         </>
@@ -120,11 +128,11 @@ export function ImportPlanPanel({ people }: { people: { memberId: string; label:
               )
             }
           >
-            {busy ? "Loading…" : "Load the 7-day plan"}
+            {busy ? "Загружаю…" : "Загрузить план на 7 дней"}
           </Button>
         ) : null}
         <Button type="button" variant="outline" disabled={busy} onClick={() => void run(() => send("/api/meals/plan", "POST"))}>
-          Start an empty plan
+          Начать с пустого плана
         </Button>
       </div>
     </section>
@@ -152,7 +160,7 @@ export function AddMealForm({ weekday }: { weekday: number }) {
       }}
     >
       <div className="grid gap-1.5">
-        <Label htmlFor={`slot-${weekday}`}>Meal</Label>
+        <Label htmlFor={`slot-${weekday}`}>Приём пищи</Label>
         <select id={`slot-${weekday}`} name="slot" className={SELECT_CLASS} defaultValue="dinner">
           {SLOT_ORDER.map((slot) => (
             <option key={slot} value={slot}>
@@ -162,11 +170,11 @@ export function AddMealForm({ weekday }: { weekday: number }) {
         </select>
       </div>
       <div className="grid gap-1.5">
-        <Label htmlFor={`title-${weekday}`}>Dish</Label>
-        <Input id={`title-${weekday}`} name="title" required maxLength={160} placeholder="Chicken with buckwheat…" />
+        <Label htmlFor={`title-${weekday}`}>Блюдо</Label>
+        <Input id={`title-${weekday}`} name="title" required maxLength={160} placeholder="Курица с гречкой…" />
       </div>
       <Button type="submit" disabled={busy}>
-        Add meal
+        Добавить блюдо
       </Button>
       <div className="sm:col-span-3">
         <ErrorText error={error} />
@@ -181,9 +189,9 @@ export function PlanNotesForm({ planId, notes }: { planId: string; notes: string
   if (!editing) {
     return (
       <div className="grid gap-2">
-        <p className="text-sm whitespace-pre-line text-muted-foreground">{notes || "No notes yet."}</p>
+        <p className="text-sm whitespace-pre-line text-muted-foreground">{notes || "Заметок пока нет."}</p>
         <Button type="button" size="sm" variant="outline" className="justify-self-start" onClick={() => setEditing(true)}>
-          Edit notes
+          Изменить заметки
         </Button>
       </div>
     );
@@ -203,10 +211,10 @@ export function PlanNotesForm({ planId, notes }: { planId: string; notes: string
       <ErrorText error={error} />
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={busy}>
-          Save
+          Сохранить
         </Button>
         <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(false)}>
-          Cancel
+          Отмена
         </Button>
       </div>
     </form>
@@ -258,11 +266,11 @@ export function FoodForm({ food, onDone }: { food?: FoodValues; onDone?: () => v
     >
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="grid gap-1.5 sm:col-span-1">
-          <Label htmlFor={`food-name-${id}`}>Name</Label>
+          <Label htmlFor={`food-name-${id}`}>Название</Label>
           <Input id={`food-name-${id}`} name="name" required maxLength={80} defaultValue={food?.name} />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor={`food-weigh-${id}`}>Weighed</Label>
+          <Label htmlFor={`food-weigh-${id}`}>Как взвешивать</Label>
           <select id={`food-weigh-${id}`} name="weigh" defaultValue={food?.weigh_mode ?? ""} className={SELECT_CLASS}>
             <option value="">—</option>
             {(Object.keys(WEIGH_LABEL) as WeighMode[]).map((mode) => (
@@ -273,7 +281,7 @@ export function FoodForm({ food, onDone }: { food?: FoodValues; onDone?: () => v
           </select>
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor={`food-cat-${id}`}>Shopping aisle</Label>
+          <Label htmlFor={`food-cat-${id}`}>Отдел в магазине</Label>
           <select id={`food-cat-${id}`} name="category" defaultValue={food?.shopping_category ?? "other"} className={SELECT_CLASS}>
             {CATEGORY_ORDER.map((c) => (
               <option key={c} value={c}>
@@ -284,11 +292,11 @@ export function FoodForm({ food, onDone }: { food?: FoodValues; onDone?: () => v
         </div>
       </div>
       <fieldset className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-        <legend className="mb-1 text-sm font-medium">Per 100 g</legend>
+        <legend className="mb-1 text-sm font-medium">На 100 г</legend>
         {(["kcal", "protein", "fat", "carbs", "fiber"] as const).map((key) => (
           <div key={key} className="grid gap-1.5">
-            <Label htmlFor={`food-${key}-${id}`} className="capitalize">
-              {key === "kcal" ? "kcal" : `${key}, g`}
+            <Label htmlFor={`food-${key}-${id}`} >
+              {NUTRIENT_LABEL[key]}
             </Label>
             <Input
               id={`food-${key}-${id}`}
@@ -303,11 +311,11 @@ export function FoodForm({ food, onDone }: { food?: FoodValues; onDone?: () => v
       <ErrorText error={error} />
       <div className="flex gap-2">
         <Button type="submit" size="sm" disabled={busy}>
-          {food?.id ? "Save" : "Add food"}
+          {food?.id ? "Сохранить" : "Добавить продукт"}
         </Button>
         {onDone && food?.id ? (
           <Button type="button" size="sm" variant="ghost" onClick={onDone}>
-            Cancel
+            Отмена
           </Button>
         ) : null}
       </div>
@@ -322,7 +330,7 @@ export function FoodRowActions({ food }: { food: FoodValues & { id: string } }) 
     <div className="grid gap-2">
       <div className="flex gap-1">
         <Button type="button" size="xs" variant="ghost" onClick={() => setEditing((v) => !v)}>
-          Edit
+          Изменить
         </Button>
         <Button
           type="button"
@@ -330,10 +338,10 @@ export function FoodRowActions({ food }: { food: FoodValues & { id: string } }) 
           variant="ghost"
           disabled={busy}
           onClick={() => {
-            if (window.confirm(`Delete "${food.name}"?`)) void run(() => send(`/api/meals/foods/${food.id}`, "DELETE"));
+            if (window.confirm(`Удалить «${food.name}»?`)) void run(() => send(`/api/meals/foods/${food.id}`, "DELETE"));
           }}
         >
-          Delete
+          Удалить
         </Button>
       </div>
       <ErrorText error={error} />
@@ -382,11 +390,11 @@ export function TargetsForm({
       <h3 className="font-semibold">{label}</h3>
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
-          ["kcal", "kcal / day", target?.kcal],
-          ["proteinMin", "Protein min, g", target?.protein_min],
-          ["proteinMax", "Protein max, g", target?.protein_max],
-          ["fatMin", "Fat min, g", target?.fat_min],
-          ["fatMax", "Fat max, g", target?.fat_max],
+          ["kcal", "ккал / день", target?.kcal],
+          ["proteinMin", "Белки мин., г", target?.protein_min],
+          ["proteinMax", "Белки макс., г", target?.protein_max],
+          ["fatMin", "Жиры мин., г", target?.fat_min],
+          ["fatMax", "Жиры макс., г", target?.fat_max],
         ].map(([name, text, value]) => (
           <div key={name as string} className="grid gap-1.5">
             <Label htmlFor={`${name}-${memberId}`}>{text}</Label>
@@ -397,9 +405,9 @@ export function TargetsForm({
       <ErrorText error={error} />
       <div className="flex items-center gap-3">
         <Button type="submit" size="sm" disabled={busy}>
-          Save targets
+          Сохранить цели
         </Button>
-        {saved ? <span className="text-sm text-muted-foreground">Saved ♥</span> : null}
+        {saved ? <span className="text-sm text-muted-foreground">Сохранено ♥</span> : null}
       </div>
     </form>
   );
@@ -417,7 +425,7 @@ export function ShoppingActions({ text }: { text: string }) {
           disabled={busy || added}
           onClick={() => void run(() => send("/api/meals/shopping-task", "POST"), () => setAdded(true))}
         >
-          {added ? "Added to To-do ♥" : "Add to To-do"}
+          {added ? "Добавлено в дела ♥" : "Добавить в дела"}
         </Button>
         <Button
           type="button"
@@ -426,7 +434,7 @@ export function ShoppingActions({ text }: { text: string }) {
             void navigator.clipboard.writeText(text).then(() => setCopied(true));
           }}
         >
-          {copied ? "Copied" : "Copy list"}
+          {copied ? "Скопировано" : "Скопировать список"}
         </Button>
       </div>
       <ErrorText error={error} />

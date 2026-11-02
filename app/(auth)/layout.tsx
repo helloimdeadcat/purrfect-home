@@ -10,7 +10,7 @@ export default function AuthLayout({
   return (
     <main className="flex flex-1 items-center justify-center px-4 py-10">
       <div className="flex w-full max-w-md flex-col items-center gap-4">
-        <Link href="/" aria-label="Purrfect Home home">
+        <Link href="/" aria-label="Purrfect Home — на главную">
           <CatCouple className="w-44" />
         </Link>
         <div className="w-full">{children}</div>

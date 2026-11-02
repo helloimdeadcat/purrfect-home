@@ -15,16 +15,16 @@ type Props = {
 };
 
 const LABELS = {
-  deposit: { title: "Add funds", amount: "Amount to add", submit: "Deposit" },
+  deposit: { title: "Пополнить", amount: "Сумма пополнения", submit: "Пополнить" },
   withdraw: {
-    title: "Withdraw",
-    amount: "Amount to withdraw",
-    submit: "Withdraw",
+    title: "Снять",
+    amount: "Сумма снятия",
+    submit: "Снять",
   },
   adjust: {
-    title: "Set balance",
-    amount: "New balance",
-    submit: "Adjust",
+    title: "Задать баланс",
+    amount: "Новый баланс",
+    submit: "Скорректировать",
   },
 } as const;
 
@@ -55,14 +55,14 @@ export function GoalOperationForm({ goalId, currency, mode, onDone }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Operation failed");
+        setError(data.error ?? "Не получилось выполнить операцию");
         return;
       }
       formEl.reset();
       onDone?.();
       router.refresh();
     } catch {
-      setError("Network error — check your connection and try again");
+      setError("Ошибка сети — проверь подключение и попробуй ещё раз");
     } finally {
       setPending(false);
     }
@@ -84,7 +84,7 @@ export function GoalOperationForm({ goalId, currency, mode, onDone }: Props) {
           />
         </div>
         <div className="grid gap-1">
-          <Label htmlFor={`${mode}-note-${goalId}`}>Note (optional)</Label>
+          <Label htmlFor={`${mode}-note-${goalId}`}>Заметка (необязательно)</Label>
           <Input id={`${mode}-note-${goalId}`} name="note" maxLength={300} />
         </div>
       </div>
@@ -94,7 +94,7 @@ export function GoalOperationForm({ goalId, currency, mode, onDone }: Props) {
         </p>
       ) : null}
       <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Saving…" : labels.submit}
+        {pending ? "Сохраняем…" : labels.submit}
       </Button>
     </form>
   );

@@ -12,17 +12,17 @@ export default async function AssistantPage({ searchParams }: Props) {
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Assistant ✨</h1>
+        <h1 className="text-2xl font-semibold">Морти ✨</h1>
         <p className="text-muted-foreground">
-          Ask for a recipe from today&apos;s meal, move things in your schedule,
-          or check how the week is going.
+          Попроси рецепт сегодняшнего блюда, перенеси что-нибудь в расписании
+          или узнай, как проходит неделя.
         </p>
       </div>
       {configured ? null : (
         <p className="card-soft p-4 text-sm" role="status">
-          The assistant isn&apos;t set up yet. Get a free key at aistudio.google.com,
-          add <code className="rounded bg-muted px-1">AI_API_KEY=…</code> to{" "}
-          <code className="rounded bg-muted px-1">.env.local</code> and restart the app.
+          Морти пока не настроен. Возьми бесплатный ключ на aistudio.google.com,
+          добавь <code className="rounded bg-muted px-1">AI_API_KEY=…</code> в{" "}
+          <code className="rounded bg-muted px-1">.env.local</code> и перезапусти приложение.
         </p>
       )}
       <AssistantChat initialQuestion={typeof q === "string" ? q.slice(0, 500) : undefined} />

@@ -46,7 +46,7 @@ describe("resolveForecastHorizon", () => {
         from: "2027-08-14",
         to: "2028-06-09",
       }),
-    ).toThrow(/cannot exceed/);
+    ).toThrow(/не может быть длиннее/);
   });
 
   it("handles month/year boundaries and leap day", () => {
@@ -89,7 +89,7 @@ describe("Safe-to-Spend reserve and optional payments", () => {
     expect(eur.safeToSpend).toBe("550.00");
     expect(eur.reserve).toBe("250.00");
     expect(usd.safeToSpend).toBe("300.00");
-    expect(result.warnings.some((w) => w.includes("reserve is not configured"))).toBe(false);
+    expect(result.warnings.some((w) => w.includes("Резерв не задан"))).toBe(false);
   });
 
   it("optional expenses lower the forecast but not Safe-to-Spend", () => {
@@ -300,7 +300,7 @@ describe("buildForecast", () => {
     expect(result.byCurrency[0].reserve).toBe("0.00");
     expect(result.byCurrency[0].safeToSpend).toBe("100.00");
     expect(
-      result.warnings.some((w) => w.toLowerCase().includes("reserve")),
+      result.warnings.some((w) => w.toLowerCase().includes("резерв")),
     ).toBe(true);
   });
 

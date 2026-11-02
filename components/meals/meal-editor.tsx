@@ -26,7 +26,7 @@ async function send(url: string, method: string, body?: unknown): Promise<string
     details?: { fieldErrors?: Record<string, string[]> };
   };
   const field = data.details?.fieldErrors ? Object.values(data.details.fieldErrors).flat()[0] : null;
-  return field ?? data.error ?? "Couldn't save";
+  return field ?? data.error ?? "Не получилось сохранить";
 }
 
 function parseGrams(value: string): number {
@@ -78,7 +78,7 @@ export function MealEditor({
     <article className="card-soft grid min-w-0 gap-3 p-4">
       <div className="grid gap-2 sm:grid-cols-[9rem_1fr_auto] sm:items-center">
         <select
-          aria-label="Meal"
+          aria-label="Приём пищи"
           defaultValue={meal.slot}
           className={SELECT_CLASS}
           disabled={busy}
@@ -91,7 +91,7 @@ export function MealEditor({
           ))}
         </select>
         <Input
-          aria-label="Dish"
+          aria-label="Блюдо"
           defaultValue={meal.title}
           maxLength={160}
           className="font-semibold"
@@ -108,12 +108,12 @@ export function MealEditor({
           size="sm"
           disabled={busy}
           onClick={() => {
-            if (window.confirm(`Remove "${meal.title}" from this day?`)) {
+            if (window.confirm(`Убрать «${meal.title}» из этого дня?`)) {
               void run(() => send(`/api/meals/meals/${meal.id}`, "DELETE"));
             }
           }}
         >
-          Remove meal
+          Убрать блюдо
         </Button>
       </div>
 
@@ -121,16 +121,16 @@ export function MealEditor({
         <table className="w-full min-w-[22rem] text-sm">
           <thead>
             <tr className="text-xs text-muted-foreground">
-              <th className="pb-1 text-left font-normal">Food</th>
+              <th className="pb-1 text-left font-normal">Продукт</th>
               {people.map((p) => (
                 <th key={p.memberId} className="w-24 pb-1 text-right font-normal">
                   <span className="inline-flex items-center gap-1">
                     <span aria-hidden className="size-2 rounded-full" style={{ background: p.color }} />
-                    {p.label}, g
+                    {p.label}, г
                   </span>
                 </th>
               ))}
-              <th className="w-10" aria-label="Actions" />
+              <th className="w-10" aria-label="Действия" />
             </tr>
           </thead>
           <tbody>
@@ -139,7 +139,7 @@ export function MealEditor({
               return (
                 <tr key={row.foodId} className="border-t border-border/60">
                   <td className="py-1 pr-2">
-                    {food?.name ?? "Unknown food"}
+                    {food?.name ?? "Неизвестный продукт"}
                     {food?.weigh_mode ? (
                       <abbr title={WEIGH_LABEL[food.weigh_mode].text} className="ml-1 text-[10px] font-semibold text-muted-foreground no-underline">
                         {WEIGH_LABEL[food.weigh_mode].code}
@@ -149,7 +149,7 @@ export function MealEditor({
                   {people.map((p) => (
                     <td key={p.memberId} className="py-1 pl-1">
                       <Input
-                        aria-label={`${food?.name ?? "Food"}, grams for ${p.label}`}
+                        aria-label={`${food?.name ?? "Продукт"}, граммы для ${p.label}`}
                         inputMode="decimal"
                         defaultValue={row.grams[p.memberId] ? String(row.grams[p.memberId]) : ""}
                         className="h-8 text-right tabular-nums"
@@ -167,7 +167,7 @@ export function MealEditor({
                       type="button"
                       size="xs"
                       variant="ghost"
-                      aria-label={`Remove ${food?.name ?? "food"}`}
+                      aria-label={`Убрать ${food?.name ?? "продукт"}`}
                       disabled={busy}
                       onClick={() => void saveRow(row.foodId, {})}
                     >
@@ -189,7 +189,7 @@ export function MealEditor({
           const form = new FormData(e.currentTarget);
           const grams = Object.fromEntries(people.map((p) => [p.memberId, parseGrams(String(form.get(p.memberId) ?? ""))]));
           if (Object.values(grams).every((g) => g === 0)) {
-            setError("Enter grams for at least one person");
+            setError("Укажи граммы хотя бы для одного человека");
             return;
           }
           const formEl = e.currentTarget;
@@ -200,12 +200,12 @@ export function MealEditor({
         }}
       >
         <select
-          aria-label="Add food"
+          aria-label="Добавить продукт"
           value={newFood}
           onChange={(e) => setNewFood(e.target.value)}
           className={`${SELECT_CLASS} min-w-40 flex-1`}
         >
-          <option value="">＋ Add food…</option>
+          <option value="">＋ Добавить продукт…</option>
           {foods
             .filter((f) => !used.has(f.id))
             .map((f) => (
@@ -220,15 +220,15 @@ export function MealEditor({
                 key={p.memberId}
                 name={p.memberId}
                 inputMode="decimal"
-                placeholder={`${p.label}, g`}
-                aria-label={`Grams for ${p.label}`}
+                placeholder={`${p.label}, г`}
+                aria-label={`Граммы для ${p.label}`}
                 className="h-9 w-24 text-right"
               />
             ))
           : null}
         {newFood ? (
           <Button type="submit" size="sm" disabled={busy}>
-            Add
+            Добавить
           </Button>
         ) : null}
       </form>

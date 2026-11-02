@@ -5,11 +5,11 @@ import { cn } from "@/lib/utils";
 import type { AnalyticsPeriodPreset } from "@/lib/calculations/analytics-period";
 
 const PERIODS: { value: AnalyticsPeriodPreset; label: string }[] = [
-  { value: "current_month", label: "This month" },
-  { value: "previous_month", label: "Last month" },
-  { value: "last_3_months", label: "3 months" },
-  { value: "last_6_months", label: "6 months" },
-  { value: "year", label: "Year" },
+  { value: "current_month", label: "Этот месяц" },
+  { value: "previous_month", label: "Прошлый месяц" },
+  { value: "last_3_months", label: "3 месяца" },
+  { value: "last_6_months", label: "6 месяцев" },
+  { value: "year", label: "Год" },
 ];
 
 type Props = {
@@ -70,14 +70,14 @@ export function AnalyticsFilters({
             }),
           )}
         >
-          Custom
+          Свой период
         </Link>
       </div>
 
       {currencies.length > 1 ? (
         <div className="flex flex-wrap gap-2">
           <span className="self-center text-sm text-muted-foreground">
-            Currency
+            Валюта
           </span>
           {currencies.map((code) => (
             <Link
@@ -106,7 +106,7 @@ export function AnalyticsFilters({
           <input type="hidden" name="period" value="custom" />
           <input type="hidden" name="currency" value={currency} />
           <label className="grid gap-1 text-sm">
-            From
+            С
             <input
               type="date"
               name="from"
@@ -116,7 +116,7 @@ export function AnalyticsFilters({
             />
           </label>
           <label className="grid gap-1 text-sm">
-            To
+            По
             <input
               type="date"
               name="to"
@@ -129,7 +129,7 @@ export function AnalyticsFilters({
             type="submit"
             className={cn(buttonVariants({ size: "sm" }))}
           >
-            Apply
+            Применить
           </button>
         </form>
       ) : null}

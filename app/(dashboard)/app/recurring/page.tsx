@@ -13,12 +13,24 @@ import {
 import { getSessionUser } from "@/lib/auth/session";
 import { listHouseholdCategories } from "@/lib/data/categories";
 import { cn } from "@/lib/utils";
-import { listAccountsWithBalances } from "@/services/account-service";
+import { listAccounts } from "@/services/account-service";
 import {
   listDueOccurrences,
   listRecurringPayments,
 } from "@/services/recurring-service";
 import { EmptyState } from "@/components/cute/empty-state";
+import { LOCALE } from "@/lib/locale";
+
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+});
+
+function formatDay(isoDate: string): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? isoDate : dayFormat.format(date);
+}
 
 type Props = {
   searchParams: Promise<{
@@ -49,7 +61,7 @@ export default async function RecurringPage({ searchParams }: Props) {
     await Promise.all([
       listRecurringPayments(supabase, ctx, { includeArchived }),
       listDueOccurrences(supabase, ctx),
-      listAccountsWithBalances(supabase, ctx),
+      listAccounts(supabase, ctx),
       listHouseholdCategories(supabase, ctx.householdId),
     ]);
 
@@ -102,11 +114,11 @@ export default async function RecurringPage({ searchParams }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Recurring</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Регулярные платежи</h1>
         <p className="text-muted-foreground">
-          Templates for regular income and expenses in {ctx.householdName}.
-          Confirm due items to create real transactions — nothing posts
-          automatically.
+          Шаблоны регулярных доходов и расходов для «{ctx.householdName}».
+          Подтверждай платежи к оплате, чтобы создать настоящие операции —
+          сами по себе они не проводятся.
         </p>
       </div>
 
@@ -126,7 +138,7 @@ export default async function RecurringPage({ searchParams }: Props) {
             }),
           )}
         >
-          All types
+          Все типы
         </Link>
         <Link
           href={href({ type: "expense" })}
@@ -137,7 +149,7 @@ export default async function RecurringPage({ searchParams }: Props) {
             }),
           )}
         >
-          Expenses
+          Расходы
         </Link>
         <Link
           href={href({ type: "income" })}
@@ -148,7 +160,7 @@ export default async function RecurringPage({ searchParams }: Props) {
             }),
           )}
         >
-          Income
+          Доходы
         </Link>
         <Link
           href={href({ status: statusFilter === "active" ? null : "active" })}
@@ -159,7 +171,7 @@ export default async function RecurringPage({ searchParams }: Props) {
             }),
           )}
         >
-          Active
+          Активные
         </Link>
         <Link
           href={href({ status: statusFilter === "paused" ? null : "paused" })}
@@ -170,7 +182,7 @@ export default async function RecurringPage({ searchParams }: Props) {
             }),
           )}
         >
-          Paused
+          На паузе
         </Link>
         <Link
           href={href({ archived: includeArchived ? null : "1" })}
@@ -181,22 +193,22 @@ export default async function RecurringPage({ searchParams }: Props) {
             }),
           )}
         >
-          {includeArchived ? "Hide archived" : "Show archived"}
+          {includeArchived ? "Скрыть архив" : "Показать архив"}
         </Link>
       </div>
 
       <section className="grid gap-3">
-        <h2 className="font-medium">Due now</h2>
+        <h2 className="font-medium">К оплате</h2>
         {overdue.length === 0 && upcoming.length === 0 ? (
           <p className="text-sm text-muted-foreground">
-            Nothing due today. Upcoming payments stay as templates until you
-            confirm them.
+            Сегодня ничего не нужно оплачивать. Будущие платежи остаются
+            шаблонами, пока ты их не подтвердишь.
           </p>
         ) : (
           <>
             {overdue.length > 0 ? (
               <div className="grid gap-2">
-                <p className="text-sm font-medium text-destructive">Overdue</p>
+                <p className="text-sm font-medium text-destructive">Просрочено</p>
                 {overdue.map((occurrence) =>
                   manage ? (
                     <DueOccurrenceActions
@@ -205,7 +217,7 @@ export default async function RecurringPage({ searchParams }: Props) {
                     />
                   ) : (
                     <p key={occurrence.id} className="text-sm">
-                      {occurrence.paymentName} · {occurrence.scheduled_date}
+                      {occurrence.paymentName} · {formatDay(occurrence.scheduled_date)}
                     </p>
                   ),
                 )}
@@ -213,7 +225,7 @@ export default async function RecurringPage({ searchParams }: Props) {
             ) : null}
             {upcoming.length > 0 ? (
               <div className="grid gap-2">
-                <p className="text-sm font-medium">Due today</p>
+                <p className="text-sm font-medium">К оплате сегодня</p>
                 {upcoming.map((occurrence) =>
                   manage ? (
                     <DueOccurrenceActions
@@ -222,7 +234,7 @@ export default async function RecurringPage({ searchParams }: Props) {
                     />
                   ) : (
                     <p key={occurrence.id} className="text-sm">
-                      {occurrence.paymentName} · {occurrence.scheduled_date}
+                      {occurrence.paymentName} · {formatDay(occurrence.scheduled_date)}
                     </p>
                   ),
                 )}
@@ -233,9 +245,9 @@ export default async function RecurringPage({ searchParams }: Props) {
       </section>
 
       <section className="grid gap-3">
-        <h2 className="font-medium">Templates</h2>
+        <h2 className="font-medium">Шаблоны</h2>
         {payments.length === 0 ? (
-          <EmptyState title="No recurring payments yet">Add rent, subscriptions or salary so nothing sneaks up on you.</EmptyState>
+          <EmptyState title="Пока нет регулярных платежей">Добавь аренду, подписки или зарплату — и ничто не застанет врасплох 🐾</EmptyState>
         ) : (
           payments.map((payment) => (
             <RecurringPaymentCard

@@ -77,13 +77,13 @@ export function HouseholdSettingsForm({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to save settings");
+        setError(data.error ?? "Не получилось сохранить настройки");
         return;
       }
-      setSuccess("Household settings saved");
+      setSuccess("Настройки семьи сохранены 🐾");
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -95,15 +95,15 @@ export function HouseholdSettingsForm({
       className="grid gap-3 card-soft p-4"
     >
       <div>
-        <h2 className="font-medium">Household</h2>
+        <h2 className="font-medium">Семья</h2>
         <p className="text-sm text-muted-foreground">
-          {householdName} · base currency {baseCurrency} (accounts may use other
-          currencies; no FX conversion)
+          {householdName} · основная валюта {baseCurrency} (у счетов может быть
+          другая валюта; курсы не пересчитываются)
         </p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="timezone">Timezone</Label>
+          <Label htmlFor="timezone">Часовой пояс</Label>
           <Input
             id="timezone"
             name="timezone"
@@ -113,7 +113,7 @@ export function HouseholdSettingsForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="weekStartsOn">Week starts on</Label>
+          <Label htmlFor="weekStartsOn">Неделя начинается с</Label>
           <select
             id="weekStartsOn"
             name="weekStartsOn"
@@ -121,13 +121,13 @@ export function HouseholdSettingsForm({
             disabled={!canEdit}
             className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
           >
-            <option value={1}>Monday</option>
-            <option value={0}>Sunday</option>
-            <option value={6}>Saturday</option>
+            <option value={1}>понедельника</option>
+            <option value={0}>воскресенья</option>
+            <option value={6}>субботы</option>
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="monthStartsOn">Month starts on (day)</Label>
+          <Label htmlFor="monthStartsOn">Месяц начинается с (число)</Label>
           <Input
             id="monthStartsOn"
             name="monthStartsOn"
@@ -140,7 +140,7 @@ export function HouseholdSettingsForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="defaultAccountId">Default account</Label>
+          <Label htmlFor="defaultAccountId">Счёт по умолчанию</Label>
           <select
             id="defaultAccountId"
             name="defaultAccountId"
@@ -148,7 +148,7 @@ export function HouseholdSettingsForm({
             disabled={!canEdit}
             className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
           >
-            <option value="">None</option>
+            <option value="">Не выбран</option>
             {accounts.map((account) => (
               <option key={account.id} value={account.id}>
                 {account.name}
@@ -157,7 +157,7 @@ export function HouseholdSettingsForm({
           </select>
         </div>
         <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor="defaultCategoryId">Default category</Label>
+          <Label htmlFor="defaultCategoryId">Категория по умолчанию</Label>
           <select
             id="defaultCategoryId"
             name="defaultCategoryId"
@@ -165,7 +165,7 @@ export function HouseholdSettingsForm({
             disabled={!canEdit}
             className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
           >
-            <option value="">None</option>
+            <option value="">Не выбран</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
                 {category.name}
@@ -176,10 +176,10 @@ export function HouseholdSettingsForm({
       </div>
       {reserves !== undefined ? (
         <fieldset className="grid gap-2">
-          <legend className="text-sm font-medium">Safe-to-Spend reserve</legend>
+          <legend className="text-sm font-medium">Резерв для «Можно потратить»</legend>
           <p className="text-sm text-muted-foreground">
-            Money to keep untouched. It is subtracted from Safe-to-Spend in
-            each currency separately (no conversion). Leave 0 for no reserve.
+            Деньги, которые лучше не трогать. Они вычитаются из «Можно потратить»
+            отдельно по каждой валюте (без пересчёта). Оставь 0, если резерв не нужен.
           </p>
           <div className="grid gap-3 sm:grid-cols-3">
             {reserveCurrencies.map((code) => (
@@ -199,7 +199,7 @@ export function HouseholdSettingsForm({
       ) : null}
       {!canEdit ? (
         <p className="text-sm text-muted-foreground">
-          Only owners and admins can change household settings.
+          Настройки семьи могут менять только владелец и админы.
         </p>
       ) : null}
       {error ? (
@@ -210,7 +210,7 @@ export function HouseholdSettingsForm({
       {success ? <p className="text-sm text-muted-foreground">{success}</p> : null}
       {canEdit ? (
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save household settings"}
+          {pending ? "Сохраняем…" : "Сохранить настройки семьи"}
         </Button>
       ) : null}
     </form>

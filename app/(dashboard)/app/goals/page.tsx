@@ -43,10 +43,10 @@ export default async function GoalsPage({ searchParams }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Цели</h1>
           <p className="text-muted-foreground">
-            Shared savings goals for {ctx.householdName}. Amounts stay in the
-            goal currency — FX conversion is not implemented.
+            Общие цели накоплений для «{ctx.householdName}». Суммы хранятся в
+            валюте цели — конвертации валют пока нет.
           </p>
         </div>
         <Link
@@ -55,7 +55,7 @@ export default async function GoalsPage({ searchParams }: Props) {
           }
           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
         >
-          {includeArchived ? "Hide archived" : "Show archived"}
+          {includeArchived ? "Скрыть архив" : "Показать архив"}
         </Link>
       </div>
 
@@ -66,9 +66,9 @@ export default async function GoalsPage({ searchParams }: Props) {
       ) : null}
 
       <section className="grid gap-3">
-        <h2 className="font-medium">Active</h2>
+        <h2 className="font-medium">Активные</h2>
         {active.length === 0 ? (
-          <EmptyState title="No goals yet">Create one to start saving for something lovely together.</EmptyState>
+          <EmptyState title="Пока нет целей">Создай цель и копите вместе на что-нибудь приятное 💕</EmptyState>
         ) : (
           active.map((goal) => (
             <GoalCard
@@ -83,9 +83,9 @@ export default async function GoalsPage({ searchParams }: Props) {
 
       {includeArchived ? (
         <section className="grid gap-3">
-          <h2 className="font-medium">Archived</h2>
+          <h2 className="font-medium">В архиве</h2>
           {archivedGoals.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No archived goals.</p>
+            <p className="text-sm text-muted-foreground">В архиве пока пусто.</p>
           ) : (
             archivedGoals.map((goal) => (
               <GoalCard

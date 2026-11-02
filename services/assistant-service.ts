@@ -27,6 +27,13 @@ export type AssistantReply = { reply: string; proposals: ProposalCard[] };
 
 /** Rounds of tool calls before we stop and answer with what we have. */
 const MAX_ROUNDS = 5;
+/**
+ * Hard deadline for one turn: every model call's timeout is cut to fit, and
+ * no new round starts with less than MIN_ROUND_MS left. Below the route's
+ * maxDuration.
+ */
+export const TURN_BUDGET_MS = 75_000;
+const MIN_ROUND_MS = 10_000;
 /** Keep tool payloads small for the free tier's token limits. */
 const MAX_TOOL_CHARS = 12_000;
 
@@ -65,10 +72,20 @@ async function safe<T>(load: () => Promise<T>): Promise<T | "unavailable"> {
   }
 }
 
+/** Name as the model sees it in tool results ("together"/"partner" stay English). */
 function personName(view: MealPlanView | TaskView | null, memberId: string | null): string {
   if (memberId === null) return "together";
   return view?.people.byMemberId.get(memberId)?.label ?? "partner";
 }
+
+/** Name as the user sees it on proposal cards. */
+function personLabel(view: MealPlanView | TaskView | null, memberId: string | null): string {
+  if (memberId === null) return "Вместе";
+  return view?.people.byMemberId.get(memberId)?.label ?? "Партнёр";
+}
+
+/** Weekday names for the (English) system prompt. */
+const WEEKDAY_EN = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] as const;
 
 function mealsOfDay(view: MealPlanView, weekday: number) {
   const foods = new Map(view.foods.map((f) => [f.id, f]));
@@ -118,7 +135,7 @@ async function runReadTool(scope: DataScope, name: string, args: Record<string, 
       const weekday = ((new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7) + 1;
       return {
         today,
-        weekday: WEEKDAY_SHORT[weekday - 1],
+        weekday: WEEKDAY_EN[weekday - 1],
         partners: people.map((p) => ({ member_id: p.memberId, name: p.label, is_you: p.isYou })),
         todays_meals: meals !== "unavailable" && meals ? mealsOfDay(meals, weekday).map((m) => ({ slot: m.slot, dish: m.dish, kcal: m.kcal })) : "no meal plan",
         todays_tasks:
@@ -149,7 +166,7 @@ async function runReadTool(scope: DataScope, name: string, args: Record<string, 
       if (!view?.plan) return { error: "No meal plan yet" };
       const totals = view.dayTotals[weekday] ?? {};
       return {
-        weekday: WEEKDAY_SHORT[weekday - 1],
+        weekday: WEEKDAY_EN[weekday - 1],
         meals: mealsOfDay(view, weekday),
         day_totals: Object.fromEntries(
           Object.entries(totals).map(([memberId, m]) => [
@@ -225,40 +242,40 @@ async function describeProposal(scope: DataScope, proposal: Proposal): Promise<s
       const i = proposal.input;
       const when = [i.startDate, describeTime(i.startTime ?? null, i.endTime ?? null)].filter(Boolean).join(" ");
       const repeat = i.repeat ? describeRepeat(i.repeat) : null;
-      return `Add "${i.title}" for ${personName(view, i.assigneeMemberId ?? null)}${when ? ` · ${when}` : ""}${repeat ? ` · ${repeat}` : ""}`;
+      return `Добавить «${i.title}» · ${personLabel(view, i.assigneeMemberId ?? null)}${when ? ` · ${when}` : ""}${repeat ? ` · ${repeat}` : ""}`;
     }
     case "update_task": {
       const view = await scope.tasks(today, today);
       const task = view?.taskById.get(proposal.taskId);
       const i = proposal.input;
       const changes = [
-        i.title !== undefined ? `rename to "${i.title}"` : null,
-        i.assigneeMemberId !== undefined ? `assign to ${personName(view, i.assigneeMemberId ?? null)}` : null,
-        i.startDate !== undefined ? `move to ${i.startDate ?? "no date"}` : null,
-        i.startTime !== undefined ? (i.startTime ? `at ${describeTime(i.startTime, i.endTime ?? null)}` : "remove the time") : null,
-        i.repeat !== undefined ? `repeat: ${describeRepeat(i.repeat) ?? "none"}` : null,
+        i.title !== undefined ? `переименовать в «${i.title}»` : null,
+        i.assigneeMemberId !== undefined ? `кто: ${personLabel(view, i.assigneeMemberId ?? null)}` : null,
+        i.startDate !== undefined ? `перенести на ${i.startDate ?? "без даты"}` : null,
+        i.startTime !== undefined ? (i.startTime ? `в ${describeTime(i.startTime, i.endTime ?? null)}` : "убрать время") : null,
+        i.repeat !== undefined ? `повтор: ${describeRepeat(i.repeat) ?? "нет"}` : null,
       ].filter(Boolean);
-      return `Change "${task?.title ?? "a task"}": ${changes.join(", ") || "no visible change"}`;
+      return `Изменить «${task?.title ?? "дело"}»: ${changes.join(", ") || "без видимых изменений"}`;
     }
     case "set_meal_portions": {
       const view = await scope.mealView();
       const meal = view?.meals.find((m) => m.id === proposal.input.mealId);
       const food = view?.foods.find((f) => f.id === proposal.input.foodId);
-      const grams = proposal.input.grams.map((g) => `${personName(view ?? null, g.memberId)} ${g.grams} g`).join(", ");
-      return `${meal ? `${WEEKDAY_SHORT[meal.weekday - 1]} ${SLOT_LABEL[meal.slot]}` : "Meal"}: ${food?.name ?? "food"} → ${grams}`;
+      const grams = proposal.input.grams.map((g) => `${personLabel(view ?? null, g.memberId)} ${g.grams} г`).join(", ");
+      return `${meal ? `${WEEKDAY_SHORT[meal.weekday - 1]} ${SLOT_LABEL[meal.slot]}` : "Блюдо"}: ${food?.name ?? "продукт"} → ${grams}`;
     }
     case "rename_meal": {
       const view = await scope.mealView();
       const meal = view?.meals.find((m) => m.id === proposal.mealId);
-      return `Rename "${meal?.title ?? "meal"}" → "${proposal.title}"`;
+      return `Переименовать «${meal?.title ?? "блюдо"}» → «${proposal.title}»`;
     }
   }
 }
 
 function systemPrompt(today: string, timezone: string, userName: string | null): string {
-  const weekday = WEEKDAY_SHORT[((new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7)];
+  const weekday = WEEKDAY_EN[((new Date(`${today}T00:00:00Z`).getUTCDay() + 6) % 7)];
   return [
-    "You are Purrfect, the warm and concise assistant inside Purrfect Home — a home organiser for a couple (money, shared to-dos and schedule, habits, meal plan).",
+    "You are Morty (Морти in Russian), the warm and concise assistant inside Purrfect Home — a home organiser for a couple (money, shared to-dos and schedule, habits, meal plan).",
     `Today is ${weekday} ${today} (${timezone}).${userName ? ` You are talking to ${userName}.` : ""}`,
     "Rules:",
     "- Get facts with the get_* tools; never invent data, amounts, dates or ids. Call get_overview first if you need the partners' member_id.",
@@ -280,7 +297,9 @@ export async function runAssistant(
   history: ChatTurn[],
   config: AiConfig,
   fetchImpl: typeof fetch = fetch,
+  now: () => number = Date.now,
 ): Promise<AssistantReply> {
+  const startedAt = now();
   const scope = new DataScope(supabase, ctx);
   const { today, timezone } = await scope.todayInfo();
   const messages: ChatMessage[] = [
@@ -288,9 +307,18 @@ export async function runAssistant(
     ...history.map((turn) => ({ role: turn.role, content: turn.content }) as ChatMessage),
   ];
   const proposals: ProposalCard[] = [];
+  let active = config;
 
+  const deadline = startedAt + TURN_BUDGET_MS;
+  let outOfTime = false;
   for (let round = 0; round < MAX_ROUNDS; round += 1) {
-    const result = await chatCompletion(config, { messages, tools: ASSISTANT_TOOLS }, fetchImpl);
+    if (round > 0 && deadline - now() < MIN_ROUND_MS) {
+      outOfTime = true;
+      break;
+    }
+    const result = await chatCompletion(active, { messages, tools: ASSISTANT_TOOLS, deadline }, fetchImpl, now);
+    // Once the fallback answered, finish the turn on it: tool-call signatures belong to that model.
+    if (result.model !== active.model) active = { ...active, model: result.model, fallbackModel: undefined };
     if (result.toolCalls.length === 0) {
       return { reply: result.content?.trim() || "…", proposals };
     }
@@ -327,8 +355,11 @@ export async function runAssistant(
     }
   }
 
+  if (proposals.length > 0) return { reply: "Вот что я предлагаю:", proposals };
   return {
-    reply: proposals.length > 0 ? "Here is what I suggest:" : "Sorry, I couldn't finish that — try asking more specifically.",
+    reply: outOfTime
+      ? "Я не успел всё проверить — сервис ИИ сейчас медленный 🐾 Спроси ещё раз, лучше чуть короче."
+      : "Ой, у меня не получилось 🐾 Попробуй спросить чуть конкретнее.",
     proposals,
   };
 }

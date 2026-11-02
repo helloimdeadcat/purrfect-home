@@ -26,6 +26,7 @@ import type { ForecastQueryInput } from "@/lib/validations/forecast";
 import {
   listAccountsWithBalances,
   summarizeHouseholdWealth,
+  type AccountWithBalance,
 } from "@/services/account-service";
 import { listBudgetsForMonth } from "@/services/budget-service";
 import {
@@ -83,9 +84,31 @@ function err(code: ServiceError["code"], message: string): ServiceError {
   return { code, message };
 }
 
-function buildCandidates(input: {
-  payments: Database["public"]["Tables"]["recurring_payments"]["Row"][];
-  occurrences: Database["public"]["Tables"]["recurring_payment_occurrences"]["Row"][];
+/** Columns buildCandidates reads (lean callers select only these). */
+export type ForecastPaymentRow = Pick<
+  Database["public"]["Tables"]["recurring_payments"]["Row"],
+  | "id"
+  | "name"
+  | "type"
+  | "amount"
+  | "currency"
+  | "start_date"
+  | "end_date"
+  | "frequency"
+  | "interval_days"
+  | "day_of_month"
+  | "weekday"
+> & { is_mandatory?: boolean | null };
+
+export type ForecastOccurrenceRow = Pick<
+  Database["public"]["Tables"]["recurring_payment_occurrences"]["Row"],
+  "id" | "recurring_payment_id" | "scheduled_date" | "status" | "amount" | "transaction_id"
+>;
+
+/** Recurring payments + occurrences → forecast candidates (shared with the morning digest). */
+export function buildCandidates(input: {
+  payments: ForecastPaymentRow[];
+  occurrences: ForecastOccurrenceRow[];
   today: string;
   horizonEnd: string;
   fallbackCurrency: string;
@@ -183,6 +206,11 @@ function balancesRecord(
   return record;
 }
 
+export type ForecastPrefetch = {
+  /** Skip a second full transaction scan when the caller already has balances. */
+  accounts?: AccountWithBalance[] | null;
+};
+
 /**
  * Build household forecast + Safe-to-Spend for the selected horizon.
  * Does not mix currencies. Does not subtract budgets from Safe-to-Spend.
@@ -191,6 +219,7 @@ export async function getForecastReport(
   supabase: AppSupabase,
   ctx: HouseholdContext,
   input: ForecastQueryInput,
+  prefetch: ForecastPrefetch = {},
 ): Promise<{ data: ForecastReport | null; error: ServiceError | null }> {
   const settingsResult = await getHouseholdSettings(supabase, ctx);
   const { timezone, today } = householdTodayFromSettings(settingsResult.data);
@@ -208,14 +237,22 @@ export async function getForecastReport(
       data: null,
       error: err(
         "VALIDATION",
-        error instanceof Error ? error.message : "Invalid horizon",
+        error instanceof Error ? error.message : "Неверный горизонт прогноза",
       ),
     };
   }
 
+  const accountsPromise =
+    prefetch.accounts !== undefined
+      ? Promise.resolve({
+          data: prefetch.accounts ?? [],
+          error: null as ServiceError | null,
+        })
+      : listAccountsWithBalances(supabase, ctx);
+
   const [accountsResult, paymentsResult, occResult, budgetsResult] =
     await Promise.all([
-      listAccountsWithBalances(supabase, ctx),
+      accountsPromise,
       fetchAllPages((from, to) =>
         supabase
           .from("recurring_payments")
@@ -345,9 +382,9 @@ export async function getForecastReport(
     warnings: built.warnings,
     formulas: {
       forecastBalance:
-        "forecastBalance = currentBalance + expectedIncome − expectedExpense (per currency; recurring schedule only)",
+        "Прогноз баланса = текущий баланс + ожидаемый доход − ожидаемый расход (по каждой валюте; учитываются только регулярные платежи)",
       safeToSpend:
-        "safeToSpend = currentBalance − mandatoryOutflows − reserve (reserve per currency from settings; optional recurring, income and budgets excluded)",
+        "«Можно потратить» = текущий баланс − обязательные платежи − резерв (резерв по валюте из настроек; необязательные регулярные платежи, доходы и бюджеты не учитываются)",
     },
   };
 

@@ -23,11 +23,11 @@ import { cn } from "@/lib/utils";
 import { loadMealPlanView, shoppingText, type MealPlanView } from "@/services/meal-service";
 
 const TABS = [
-  { key: "today", label: "Today" },
-  { key: "plan", label: "Week plan" },
-  { key: "shopping", label: "Shopping" },
-  { key: "foods", label: "Foods" },
-  { key: "targets", label: "Targets" },
+  { key: "today", label: "Сегодня" },
+  { key: "plan", label: "План на неделю" },
+  { key: "shopping", label: "Покупки" },
+  { key: "foods", label: "Продукты" },
+  { key: "targets", label: "Цели КБЖУ" },
 ] as const;
 type Tab = (typeof TABS)[number]["key"];
 
@@ -64,7 +64,7 @@ function DayView({ view, weekday }: { view: MealPlanView; weekday: number }) {
         ))}
       </section>
       {meals.length === 0 ? (
-        <EmptyState title="Nothing planned for this day">Add meals on the Week plan tab.</EmptyState>
+        <EmptyState title="На этот день ничего не запланировано">Добавь блюда во вкладке «План на неделю».</EmptyState>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {meals.map((meal) => (
@@ -89,7 +89,7 @@ function PlanEditor({ view, weekday }: { view: MealPlanView; weekday: number }) 
   const foodOptions = view.foods.map((f) => ({ id: f.id, name: f.name, weigh_mode: f.weigh_mode }));
   return (
     <div className="grid gap-4">
-      <nav aria-label="Day" className="flex flex-wrap gap-1.5">
+      <nav aria-label="День" className="flex flex-wrap gap-1.5">
         {WEEKDAY_SHORT.map((label, index) => {
           const day = index + 1;
           return (
@@ -141,7 +141,7 @@ function PlanEditor({ view, weekday }: { view: MealPlanView; weekday: number }) 
       {view.canEdit ? <AddMealForm weekday={weekday} /> : null}
       {view.plan ? (
         <details className="card-soft p-4">
-          <summary className="cursor-pointer font-medium">Plan notes: weighing rules &amp; cooking tips</summary>
+          <summary className="cursor-pointer font-medium">Заметки к плану: правила взвешивания и советы по готовке</summary>
           <div className="mt-3">
             <PlanNotesForm planId={view.plan.id} notes={view.plan.notes} />
           </div>
@@ -153,14 +153,14 @@ function PlanEditor({ view, weekday }: { view: MealPlanView; weekday: number }) 
 
 function ShoppingView({ view }: { view: MealPlanView }) {
   if (view.shopping.length === 0) {
-    return <EmptyState title="Nothing to buy yet">Add ingredients to the week plan first.</EmptyState>;
+    return <EmptyState title="Пока нечего покупать">Сначала добавь продукты в план на неделю.</EmptyState>;
   }
   return (
     <div className="grid gap-4">
       <p className="text-sm text-muted-foreground">
-        Everything the week plan needs for both of you. Amounts are net (dry,
-        raw, edible or drained, as in the plan) — buy a little extra for peel
-        and trimming.
+        Всё, что нужно для плана на неделю на вас обоих. Вес указан нетто (сухой,
+        сырой, съедобная часть или без жидкости — как в плане), так что бери
+        чуть больше на очистки и обрезки.
       </p>
       {view.canEdit ? <ShoppingActions text={shoppingText(view, CATEGORY_LABEL)} /> : null}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -179,7 +179,7 @@ function ShoppingView({ view }: { view: MealPlanView }) {
                     {food.grams_per_piece ? (
                       <span className="text-muted-foreground">
                         {" "}
-                        ≈{Math.ceil(grams / Number(food.grams_per_piece))} {food.piece_label ?? "pcs"}
+                        ≈{Math.ceil(grams / Number(food.grams_per_piece))} {food.piece_label ?? "шт."}
                       </span>
                     ) : null}
                   </span>
@@ -198,14 +198,14 @@ function FoodsView({ view }: { view: MealPlanView }) {
     <div className="grid gap-4">
       {view.canEdit ? (
         <details className="card-soft p-4">
-          <summary className="cursor-pointer font-medium">＋ Add food</summary>
+          <summary className="cursor-pointer font-medium">＋ Добавить продукт</summary>
           <div className="mt-3">
             <FoodForm />
           </div>
         </details>
       ) : null}
       {view.foods.length === 0 ? (
-        <EmptyState title="No foods yet">Add foods with calories and macros per 100 g.</EmptyState>
+        <EmptyState title="Продуктов пока нет">Добавь продукты с калориями и КБЖУ на 100 г.</EmptyState>
       ) : (
         <ul className="grid gap-2">
           {view.foods.map((food) => (
@@ -217,8 +217,8 @@ function FoodsView({ view }: { view: MealPlanView }) {
                     <WeighBadge mode={food.weigh_mode} />
                   </p>
                   <p className="text-xs text-muted-foreground tabular-nums">
-                    per 100 g: {Number(food.kcal)} kcal · P {Number(food.protein)} / F {Number(food.fat)} / C{" "}
-                    {Number(food.carbs)} · fiber {Number(food.fiber)} · {CATEGORY_LABEL[food.shopping_category]}
+                    на 100 г: {Number(food.kcal)} ккал · Б {Number(food.protein)} / Ж {Number(food.fat)} / У{" "}
+                    {Number(food.carbs)} · клетчатка {Number(food.fiber)} · {CATEGORY_LABEL[food.shopping_category]}
                   </p>
                 </div>
                 {view.canEdit ? <FoodRowActions food={food} /> : null}
@@ -242,7 +242,7 @@ export default async function MealsPage({ searchParams }: Props) {
   if (!view) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Meals</h1>
+        <h1 className="text-2xl font-semibold">Питание</h1>
         <p className="text-sm text-destructive" role="alert">
           {error?.message}
         </p>
@@ -257,24 +257,24 @@ export default async function MealsPage({ searchParams }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Meals</h1>
+        <h1 className="text-2xl font-semibold">Питание</h1>
         <p className="text-muted-foreground">
-          {view.plan ? view.plan.name : "Your shared meal plan"} — same dishes,
-          your own portions.
+          {view.plan ? view.plan.name : "Ваш общий план питания"} — одни и те же блюда,
+          у каждого свои порции.
         </p>
       </div>
 
       {!view.plan ? (
         view.canEdit ? (
           <ImportPlanPanel
-            people={view.people.list.map((p) => ({ memberId: p.memberId!, label: p.isYou ? `${p.label} (you)` : p.label }))}
+            people={view.people.list.map((p) => ({ memberId: p.memberId!, label: p.isYou ? `${p.label} (ты)` : p.label }))}
           />
         ) : (
-          <EmptyState title="No meal plan yet" />
+          <EmptyState title="Плана питания пока нет" />
         )
       ) : (
         <>
-          <nav aria-label="Meals sections" className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
+          <nav aria-label="Разделы питания" className="flex gap-1 overflow-x-auto [scrollbar-width:none]">
             {TABS.map((t) => (
               <Link
                 key={t.key}
@@ -304,14 +304,14 @@ export default async function MealsPage({ searchParams }: Props) {
           {tab === "targets" ? (
             <div className="grid gap-4">
               <p className="text-sm text-muted-foreground">
-                Daily targets used for the calorie bars and protein/fat checks.
-                Recalculate after a 3–5 kg change in weight or activity.
+                Дневные цели для полосок калорий и проверки белков/жиров.
+                Пересчитай, если вес изменился на 3–5 кг или поменялась активность.
               </p>
               {view.people.list.map((p) => (
                 <TargetsForm
                   key={p.memberId}
                   memberId={p.memberId!}
-                  label={p.isYou ? `${p.label} (you)` : p.label}
+                  label={p.isYou ? `${p.label} (ты)` : p.label}
                   target={view.targets[p.memberId!]}
                 />
               ))}

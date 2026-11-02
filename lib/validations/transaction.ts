@@ -14,19 +14,19 @@ export const adjustmentDirectionSchema = z.enum(["increase", "decrease"]);
 const moneyInputSchema = z
   .string()
   .trim()
-  .min(1, "Amount is required")
+  .min(1, "Укажи сумму")
   .transform((value, ctx) => {
     try {
       const normalized = normalizeMoneyInput(value);
       if (normalized.startsWith("-") || normalized === "0.00") {
-        ctx.addIssue({ code: "custom", message: "Amount must be greater than 0" });
+        ctx.addIssue({ code: "custom", message: "Сумма должна быть больше нуля" });
         return z.NEVER;
       }
       return normalized;
     } catch {
       ctx.addIssue({
         code: "custom",
-        message: "Enter a valid amount with up to 2 decimals",
+        message: "Введи корректную сумму (не больше 2 знаков после запятой)",
       });
       return z.NEVER;
     }
@@ -39,7 +39,7 @@ const transactionFields = {
   type: z.enum(["expense", "income", "adjustment"]),
   amount: moneyInputSchema,
   currency: z.string().trim().length(3).toUpperCase().optional(),
-  transactionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+  transactionDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД"),
   description: z.string().trim().max(500).nullable().optional(),
   merchant: z.string().trim().max(200).nullable().optional(),
   isNecessary: z.boolean().optional().default(true),
@@ -60,14 +60,14 @@ function refineAdjustmentDirection(
     ctx.addIssue({
       code: "custom",
       path: ["adjustmentDirection"],
-      message: "adjustmentDirection is required for adjustments",
+      message: "Для корректировки выбери направление",
     });
   }
   if (data.type && data.type !== "adjustment" && data.adjustmentDirection) {
     ctx.addIssue({
       code: "custom",
       path: ["adjustmentDirection"],
-      message: "adjustmentDirection is only allowed for adjustments",
+      message: "Направление можно указать только для корректировки",
     });
   }
 }
@@ -86,7 +86,7 @@ export const updateTransactionSchema = z
     currency: transactionFields.currency,
     transactionDate: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД")
       .optional(),
     description: transactionFields.description,
     merchant: transactionFields.merchant,

@@ -8,12 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 const ACCOUNT_TYPES = [
-  { value: "bank_account", label: "Bank account" },
-  { value: "credit_card", label: "Credit card" },
-  { value: "cash", label: "Cash" },
-  { value: "savings", label: "Savings" },
-  { value: "investment", label: "Investment" },
-  { value: "other", label: "Other" },
+  { value: "bank_account", label: "Банковский счёт" },
+  { value: "credit_card", label: "Кредитная карта" },
+  { value: "cash", label: "Наличные" },
+  { value: "savings", label: "Сбережения" },
+  { value: "investment", label: "Инвестиции" },
+  { value: "other", label: "Другое" },
 ] as const;
 
 type Props = {
@@ -49,13 +49,13 @@ export function CreateAccountForm({ defaultCurrency }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to create account");
+        setError(data.error ?? "Не получилось создать счёт");
         return;
       }
       formEl.reset();
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -63,14 +63,14 @@ export function CreateAccountForm({ defaultCurrency }: Props) {
 
   return (
     <form onSubmit={onSubmit} className="grid gap-3 card-soft p-4">
-      <h2 className="font-medium">Add account</h2>
+      <h2 className="font-medium">Добавить счёт</h2>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="name">Name</Label>
-          <Input id="name" name="name" required placeholder="Main checking" />
+          <Label htmlFor="name">Название</Label>
+          <Input id="name" name="name" required placeholder="Основная карта" />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="type">Type</Label>
+          <Label htmlFor="type">Тип</Label>
           <select
             id="type"
             name="type"
@@ -87,17 +87,17 @@ export function CreateAccountForm({ defaultCurrency }: Props) {
       </div>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="initialBalance">Initial balance</Label>
+          <Label htmlFor="initialBalance">Начальный баланс</Label>
           <Input
             id="initialBalance"
             name="initialBalance"
             inputMode="decimal"
-            defaultValue="0.00"
+            defaultValue="0,00"
             required
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="currency">Currency</Label>
+          <Label htmlFor="currency">Валюта</Label>
           <Input
             id="currency"
             name="currency"
@@ -108,12 +108,12 @@ export function CreateAccountForm({ defaultCurrency }: Props) {
         </div>
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="note">Note</Label>
-        <Input id="note" name="note" placeholder="Optional" />
+        <Label htmlFor="note">Заметка</Label>
+        <Input id="note" name="note" placeholder="Необязательно" />
       </div>
       <label className="flex items-center gap-2 text-sm">
         <input id="isShared" name="isShared" type="checkbox" defaultChecked />
-        Shared with household
+        Общий для семьи
       </label>
       {error ? (
         <p className="text-sm text-destructive" role="alert">
@@ -121,7 +121,7 @@ export function CreateAccountForm({ defaultCurrency }: Props) {
         </p>
       ) : null}
       <Button type="submit" disabled={pending} className="w-fit">
-        {pending ? "Saving…" : "Create account"}
+        {pending ? "Сохраняем…" : "Создать счёт"}
       </Button>
     </form>
   );

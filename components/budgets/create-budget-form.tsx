@@ -48,13 +48,13 @@ export function CreateBudgetForm({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to create budget");
+        setError(data.error ?? "Не получилось создать бюджет");
         return;
       }
       formEl.reset();
       router.refresh();
     } catch {
-      setError("Network error — check your connection and try again");
+      setError("Ошибка сети — проверь подключение и попробуй ещё раз");
     } finally {
       setPending(false);
     }
@@ -63,7 +63,7 @@ export function CreateBudgetForm({
   if (available.length === 0) {
     return (
       <div className="card-soft p-4 text-sm text-muted-foreground">
-        All expense categories already have a budget for this month.
+        У всех категорий расходов уже есть бюджет на этот месяц.
       </div>
     );
   }
@@ -73,14 +73,14 @@ export function CreateBudgetForm({
       onSubmit={onSubmit}
       className="grid gap-3 card-soft p-4"
     >
-      <h2 className="font-medium">Add category budget</h2>
+      <h2 className="font-medium">Добавить бюджет для категории</h2>
       <p className="text-sm text-muted-foreground">
-        Limit is in household currency ({currency}). Transfers and deleted
-        transactions are not counted.
+        Лимит задаётся в валюте семьи ({currency}). Переводы и удалённые
+        операции не учитываются.
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="budget-category">Category</Label>
+          <Label htmlFor="budget-category">Категория</Label>
           <select
             id="budget-category"
             name="categoryId"
@@ -89,7 +89,7 @@ export function CreateBudgetForm({
             defaultValue=""
           >
             <option value="" disabled>
-              Select category
+              Выбери категорию
             </option>
             {available.map((category) => (
               <option key={category.id} value={category.id}>
@@ -99,12 +99,12 @@ export function CreateBudgetForm({
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="budget-amount">Monthly limit ({currency})</Label>
+          <Label htmlFor="budget-amount">Лимит на месяц ({currency})</Label>
           <Input
             id="budget-amount"
             name="amount"
             inputMode="decimal"
-            placeholder="200.00"
+            placeholder="200,00"
             required
           />
         </div>
@@ -115,7 +115,7 @@ export function CreateBudgetForm({
         </p>
       ) : null}
       <Button type="submit" disabled={pending}>
-        {pending ? "Creating…" : "Create budget"}
+        {pending ? "Создаём…" : "Создать бюджет"}
       </Button>
     </form>
   );

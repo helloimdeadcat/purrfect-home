@@ -41,13 +41,13 @@ export function CreateGoalForm({ defaultCurrency }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to create goal");
+        setError(data.error ?? "Не получилось создать цель");
         return;
       }
       formEl.reset();
       router.refresh();
     } catch {
-      setError("Network error — check your connection and try again");
+      setError("Ошибка сети — проверь подключение и попробуй ещё раз");
     } finally {
       setPending(false);
     }
@@ -58,24 +58,24 @@ export function CreateGoalForm({ defaultCurrency }: Props) {
       onSubmit={onSubmit}
       className="grid gap-3 card-soft p-4"
     >
-      <h2 className="font-medium">New goal</h2>
+      <h2 className="font-medium">Новая цель</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor="goal-name">Name</Label>
+          <Label htmlFor="goal-name">Название</Label>
           <Input id="goal-name" name="name" required maxLength={120} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="goal-target">Target amount</Label>
+          <Label htmlFor="goal-target">Сколько нужно</Label>
           <Input
             id="goal-target"
             name="targetAmount"
             inputMode="decimal"
-            placeholder="1000.00"
+            placeholder="1000,00"
             required
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="goal-currency">Currency</Label>
+          <Label htmlFor="goal-currency">Валюта</Label>
           <Input
             id="goal-currency"
             name="currency"
@@ -85,7 +85,7 @@ export function CreateGoalForm({ defaultCurrency }: Props) {
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="goal-initial">Starting amount</Label>
+          <Label htmlFor="goal-initial">Уже накоплено</Label>
           <Input
             id="goal-initial"
             name="initialAmount"
@@ -94,11 +94,11 @@ export function CreateGoalForm({ defaultCurrency }: Props) {
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="goal-date">Target date (optional)</Label>
+          <Label htmlFor="goal-date">К какой дате (необязательно)</Label>
           <Input id="goal-date" name="targetDate" type="date" />
         </div>
         <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor="goal-description">Description (optional)</Label>
+          <Label htmlFor="goal-description">Описание (необязательно)</Label>
           <Textarea id="goal-description" name="description" rows={2} />
         </div>
       </div>
@@ -108,7 +108,7 @@ export function CreateGoalForm({ defaultCurrency }: Props) {
         </p>
       ) : null}
       <Button type="submit" disabled={pending}>
-        {pending ? "Creating…" : "Create goal"}
+        {pending ? "Создаём…" : "Создать цель"}
       </Button>
     </form>
   );

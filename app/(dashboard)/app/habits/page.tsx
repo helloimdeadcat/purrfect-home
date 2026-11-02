@@ -18,7 +18,7 @@ export default async function HabitsPage() {
   if (!data) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Habits</h1>
+        <h1 className="text-2xl font-semibold">Привычки</h1>
         <p className="text-sm text-destructive" role="alert">
           {error?.message}
         </p>
@@ -27,24 +27,24 @@ export default async function HabitsPage() {
   }
 
   const people = [
-    { memberId: null, label: "Both of us (each tracks their own)" },
-    ...data.people.list.map((p) => ({ memberId: p.memberId, label: p.isYou ? `${p.label} (you)` : p.label })),
+    { memberId: null, label: "Мы оба (каждый отмечает своё)" },
+    ...data.people.list.map((p) => ({ memberId: p.memberId, label: p.isYou ? `${p.label} (ты)` : p.label })),
   ];
   const canAdd = data.habits.length === 0 || data.habits[0].canManage;
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold">Habits</h1>
+        <h1 className="text-2xl font-semibold">Привычки</h1>
         <p className="text-muted-foreground">
-          Little routines, side by side. Tick your own days — up to a week back —
-          and cheer each other on.
+          Маленькие ритуалы рядом друг с другом. Отмечай свои дни — до недели назад —
+          и поддерживайте друг друга.
         </p>
       </div>
 
       {canAdd ? (
         <details className="card-soft p-4" open={data.habits.length === 0}>
-          <summary className="cursor-pointer font-medium">＋ New habit</summary>
+          <summary className="cursor-pointer font-medium">＋ Новая привычка</summary>
           <div className="mt-3">
             <HabitForm people={people} defaultOwner={null} />
           </div>
@@ -52,8 +52,8 @@ export default async function HabitsPage() {
       ) : null}
 
       {data.habits.length === 0 ? (
-        <EmptyState title="No habits yet">
-          Start small: drink water, an evening walk together, 10 pages of a book.
+        <EmptyState title="Привычек пока нет">
+          Начни с малого: пить воду, вечерняя прогулка вместе, 10 страниц книги.
         </EmptyState>
       ) : (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

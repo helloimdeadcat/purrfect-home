@@ -73,7 +73,7 @@ async function assertUniqueName(
   if (clash) {
     return err(
       "CONFLICT",
-      "An active category with this name and type already exists",
+      "Активная категория с таким названием и типом уже есть",
     );
   }
   return null;
@@ -87,7 +87,7 @@ export async function createCategory(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot create categories"),
+      error: err("FORBIDDEN", "Наблюдатели не могут создавать категории"),
     };
   }
 
@@ -112,7 +112,7 @@ export async function createCategory(
       parent.household_id !== ctx.householdId ||
       !parent.is_active
     ) {
-      return { data: null, error: err("VALIDATION", "Parent category not found") };
+      return { data: null, error: err("VALIDATION", "Родительская категория не найдена") };
     }
   }
 
@@ -135,7 +135,7 @@ export async function createCategory(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create category"),
+      error: err("DB", error?.message ?? "Не получилось создать категорию"),
     };
   }
   return { data, error: null };
@@ -150,7 +150,7 @@ export async function updateCategory(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot update categories"),
+      error: err("FORBIDDEN", "Наблюдатели не могут менять категории"),
     };
   }
 
@@ -165,7 +165,7 @@ export async function updateCategory(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Category not found") };
+    return { data: null, error: err("NOT_FOUND", "Категория не найдена") };
   }
 
   const nextName =
@@ -203,7 +203,7 @@ export async function updateCategory(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update category"),
+      error: err("DB", error?.message ?? "Не получилось обновить категорию"),
     };
   }
   return { data, error: null };
@@ -218,7 +218,7 @@ export async function archiveOrDeleteCategory(
   if (!canAdmin(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Only owners and admins can remove categories"),
+      error: err("FORBIDDEN", "Удалять категории могут только владелец и админы"),
     };
   }
 
@@ -233,7 +233,7 @@ export async function archiveOrDeleteCategory(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Category not found") };
+    return { data: null, error: err("NOT_FOUND", "Категория не найдена") };
   }
 
   const [tx, budgets, recurring] = await Promise.all([

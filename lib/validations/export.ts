@@ -3,7 +3,7 @@ import { z } from "zod";
 const dateSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД");
 
 /** Longest export window — keeps a single request bounded. */
 export const MAX_EXPORT_DAYS = 5 * 366;
@@ -21,9 +21,9 @@ export const transactionExportSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.to < data.from) {
-      ctx.addIssue({ code: "custom", message: "End date must be on or after start date", path: ["to"] });
+      ctx.addIssue({ code: "custom", message: "Дата окончания не может быть раньше даты начала", path: ["to"] });
     } else if (spanDays(data.from, data.to) > MAX_EXPORT_DAYS) {
-      ctx.addIssue({ code: "custom", message: "Export range cannot exceed 5 years", path: ["to"] });
+      ctx.addIssue({ code: "custom", message: "Период экспорта — не больше 5 лет", path: ["to"] });
     }
   });
 

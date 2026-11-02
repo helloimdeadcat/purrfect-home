@@ -619,6 +619,8 @@ export type Database = {
           is_read: boolean;
           link: string | null;
           created_at: string;
+          /** Set by the push dispatcher (migration 20261027120000). */
+          pushed_at: string | null;
         };
         Insert: {
           id?: string;
@@ -630,8 +632,33 @@ export type Database = {
           is_read?: boolean;
           link?: string | null;
           created_at?: string;
+          pushed_at?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["notifications"]["Insert"]>;
+        Relationships: [];
+      };
+      push_subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent: string | null;
+          created_at: string;
+          last_used_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          endpoint: string;
+          p256dh: string;
+          auth: string;
+          user_agent?: string | null;
+          created_at?: string;
+          last_used_at?: string | null;
+        };
+        Update: Partial<Database["public"]["Tables"]["push_subscriptions"]["Insert"]>;
         Relationships: [];
       };
       household_settings: {
@@ -944,6 +971,38 @@ export type Database = {
     };
     Views: Record<string, never>;
     Functions: {
+      cleanup_expired_data: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      list_purgeable_receipt_files: {
+        Args: { p_limit?: number };
+        Returns: { receipt_id: string | null; storage_path: string }[];
+      };
+      household_receipt_usage: {
+        Args: { p_household_id: string };
+        Returns: { files: number; bytes: number }[];
+      };
+      take_ai_quota: {
+        Args: { p_kind: string; p_window_seconds: number; p_window_limit: number; p_daily_limit: number };
+        Returns: boolean;
+      };
+      save_push_subscription: {
+        Args: { p_endpoint: string; p_p256dh: string; p_auth: string; p_user_agent: string | null };
+        Returns: string;
+      };
+      claim_notification_pushes: {
+        Args: { p_household_id: string; p_limit?: number; p_max_age?: string };
+        Returns: {
+          id: string;
+          user_id: string;
+          type: string;
+          title: string;
+          message: string;
+          link: string | null;
+          created_at: string;
+        }[];
+      };
       is_household_member: {
         Args: { p_household_id: string };
         Returns: boolean;

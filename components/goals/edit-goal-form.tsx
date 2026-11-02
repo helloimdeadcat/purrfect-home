@@ -52,13 +52,13 @@ export function EditGoalForm({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to update goal");
+        setError(data.error ?? "Не получилось обновить цель");
         return;
       }
       onDone?.();
       router.refresh();
     } catch {
-      setError("Network error — check your connection and try again");
+      setError("Ошибка сети — проверь подключение и попробуй ещё раз");
     } finally {
       setPending(false);
     }
@@ -66,10 +66,10 @@ export function EditGoalForm({
 
   return (
     <form onSubmit={onSubmit} className="grid gap-2 rounded-lg border border-border p-3">
-      <p className="text-sm font-medium">Edit goal</p>
+      <p className="text-sm font-medium">Изменить цель</p>
       <div className="grid gap-2 sm:grid-cols-2">
         <div className="grid gap-1 sm:col-span-2">
-          <Label htmlFor={`edit-name-${goalId}`}>Name</Label>
+          <Label htmlFor={`edit-name-${goalId}`}>Название</Label>
           <Input
             id={`edit-name-${goalId}`}
             name="name"
@@ -78,7 +78,7 @@ export function EditGoalForm({
           />
         </div>
         <div className="grid gap-1">
-          <Label htmlFor={`edit-target-${goalId}`}>Target ({currency})</Label>
+          <Label htmlFor={`edit-target-${goalId}`}>Цель ({currency})</Label>
           <Input
             id={`edit-target-${goalId}`}
             name="targetAmount"
@@ -88,7 +88,7 @@ export function EditGoalForm({
           />
         </div>
         <div className="grid gap-1">
-          <Label htmlFor={`edit-date-${goalId}`}>Target date</Label>
+          <Label htmlFor={`edit-date-${goalId}`}>К какой дате</Label>
           <Input
             id={`edit-date-${goalId}`}
             name="targetDate"
@@ -97,7 +97,7 @@ export function EditGoalForm({
           />
         </div>
         <div className="grid gap-1 sm:col-span-2">
-          <Label htmlFor={`edit-desc-${goalId}`}>Description</Label>
+          <Label htmlFor={`edit-desc-${goalId}`}>Описание</Label>
           <Textarea
             id={`edit-desc-${goalId}`}
             name="description"
@@ -112,7 +112,7 @@ export function EditGoalForm({
         </p>
       ) : null}
       <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Saving…" : "Save changes"}
+        {pending ? "Сохраняем…" : "Сохранить"}
       </Button>
     </form>
   );

@@ -208,7 +208,7 @@ export async function loadMealPlanView(
 // ---------------------------------------------------------------------------
 
 function forbid(ctx: HouseholdContext): ServiceError | null {
-  return canWrite(ctx.role) ? null : err("FORBIDDEN", "Viewers cannot edit the meal plan");
+  return canWrite(ctx.role) ? null : err("FORBIDDEN", "Наблюдатели не могут менять план питания");
 }
 
 async function activePlanId(supabase: AppSupabase, ctx: HouseholdContext): Promise<string | null> {
@@ -248,8 +248,8 @@ export async function createFood(supabase: AppSupabase, ctx: HouseholdContext, i
     .insert({ household_id: ctx.householdId, name: input.name, ...foodColumns(input) })
     .select("*")
     .single();
-  if (isUniqueViolation(error)) return { data: null, error: err("CONFLICT", "A food with this name already exists") };
-  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Failed to add food") };
+  if (isUniqueViolation(error)) return { data: null, error: err("CONFLICT", "Продукт с таким названием уже есть") };
+  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Не получилось добавить продукт") };
   return { data, error: null };
 }
 
@@ -263,9 +263,9 @@ export async function updateFood(supabase: AppSupabase, ctx: HouseholdContext, f
     .eq("household_id", ctx.householdId)
     .select("*")
     .maybeSingle();
-  if (isUniqueViolation(error)) return { data: null, error: err("CONFLICT", "A food with this name already exists") };
+  if (isUniqueViolation(error)) return { data: null, error: err("CONFLICT", "Продукт с таким названием уже есть") };
   if (error) return { data: null, error: err("DB", error.message) };
-  if (!data) return { data: null, error: err("NOT_FOUND", "Food not found") };
+  if (!data) return { data: null, error: err("NOT_FOUND", "Продукт не найден") };
   return { data, error: null };
 }
 
@@ -274,24 +274,24 @@ export async function deleteFood(supabase: AppSupabase, ctx: HouseholdContext, f
   if (denied) return { error: denied };
   const { error } = await supabase.from("foods").delete().eq("id", foodId).eq("household_id", ctx.householdId);
   if (error?.code === "23503") {
-    return { error: err("CONFLICT", "This food is used in the meal plan — remove it from meals first") };
+    return { error: err("CONFLICT", "Этот продукт есть в плане — сначала убери его из блюд") };
   }
   if (error) return { error: err("DB", error.message) };
   return { error: null };
 }
 
-export async function createEmptyPlan(supabase: AppSupabase, ctx: HouseholdContext, name = "Our meal plan") {
+export async function createEmptyPlan(supabase: AppSupabase, ctx: HouseholdContext, name = "Наш план питания") {
   const denied = forbid(ctx);
   if (denied) return { data: null, error: denied };
   if (await activePlanId(supabase, ctx)) {
-    return { data: null, error: err("CONFLICT", "There is already an active plan") };
+    return { data: null, error: err("CONFLICT", "Активный план уже есть") };
   }
   const { data, error } = await supabase
     .from("meal_plans")
     .insert({ household_id: ctx.householdId, name, created_by: ctx.user.id })
     .select("*")
     .single();
-  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Failed to create plan") };
+  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Не получилось создать план") };
   return { data, error: null };
 }
 
@@ -310,13 +310,13 @@ export async function createMeal(supabase: AppSupabase, ctx: HouseholdContext, i
   const denied = forbid(ctx);
   if (denied) return { data: null, error: denied };
   const planId = await activePlanId(supabase, ctx);
-  if (!planId) return { data: null, error: err("NOT_FOUND", "Create a meal plan first") };
+  if (!planId) return { data: null, error: err("NOT_FOUND", "Сначала создай план питания") };
   const { data, error } = await supabase
     .from("meal_plan_meals")
     .insert({ plan_id: planId, household_id: ctx.householdId, ...input })
     .select("*")
     .single();
-  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Failed to add meal") };
+  if (error || !data) return { data: null, error: err("DB", error?.message ?? "Не получилось добавить блюдо") };
   return { data, error: null };
 }
 
@@ -393,7 +393,7 @@ export async function upsertNutritionTarget(supabase: AppSupabase, ctx: Househol
   return { error: null };
 }
 
-/** "Куриная грудка — 2.07 kg" / "Яйца — 510 g (≈9 egg)" lines grouped by category. */
+/** "Куриная грудка — 2,07 кг" / "Яйца — 510 г (≈9 шт.)" lines grouped by category. */
 export function shoppingText(view: Pick<MealPlanView, "shopping">, labels: Record<ShoppingCategory, string>): string {
   return view.shopping
     .map((group) => {
@@ -418,11 +418,11 @@ export async function createShoppingTask(
   const view = await loadMealPlanView(supabase, ctx);
   if (view.error || !view.data) return { data: null, error: view.error };
   if (view.data.shopping.length === 0) {
-    return { data: null, error: err("VALIDATION", "The plan has no ingredients yet") };
+    return { data: null, error: err("VALIDATION", "В плане пока нет продуктов") };
   }
-  const notes = `${shoppingText(view.data, labels)}\n\nAmounts are net (raw/dry/edible) — buy a little extra for peel and trimming.`;
+  const notes = `${shoppingText(view.data, labels)}\n\nВес указан нетто (сырой/сухой/съедобная часть) — бери чуть больше на очистки и обрезки.`;
   return createTask(supabase, ctx, {
-    title: "Groceries for the week 🛒",
+    title: "Продукты на неделю 🛒",
     notes: notes.slice(0, 2000),
     assigneeMemberId: null,
     startDate: view.data.today,
@@ -444,7 +444,7 @@ export async function importSevenDayPlan(supabase: AppSupabase, ctx: HouseholdCo
   const members = await listFamilyMembers(supabase, ctx);
   const memberIds = new Set((members.data ?? []).map((m) => m.id));
   if (!memberIds.has(input.husbandMemberId) || !memberIds.has(input.wifeMemberId)) {
-    return { data: null, error: err("VALIDATION", "Pick two members of this household") };
+    return { data: null, error: err("VALIDATION", "Выбери двух участников вашего дома") };
   }
 
   // Foods: reuse by (case-insensitive) name, insert the rest.
@@ -497,7 +497,7 @@ export async function importSevenDayPlan(supabase: AppSupabase, ctx: HouseholdCo
     .single();
   if (planError || !plan) {
     if (previousId) await supabase.from("meal_plans").update({ is_active: true }).eq("id", previousId);
-    return { data: null, error: err("DB", planError?.message ?? "Failed to create plan") };
+    return { data: null, error: err("DB", planError?.message ?? "Не получилось создать план") };
   }
 
   const rollback = async (message: string) => {
@@ -518,7 +518,7 @@ export async function importSevenDayPlan(supabase: AppSupabase, ctx: HouseholdCo
       })),
     )
     .select("id, weekday, slot");
-  if (mealsError || !meals) return rollback(mealsError?.message ?? "Failed to add meals");
+  if (mealsError || !meals) return rollback(mealsError?.message ?? "Не получилось добавить блюда");
 
   const mealId = new Map(meals.map((m) => [`${m.weekday}:${m.slot}`, m.id]));
   const portions = PLAN_MEALS.flatMap((m) =>

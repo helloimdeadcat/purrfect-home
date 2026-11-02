@@ -8,6 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { displayMoney } from "@/lib/calculations/money";
 
+const FREQUENCY_LABELS: Record<string, string> = {
+  daily: "каждый день",
+  weekly: "каждую неделю",
+  monthly: "каждый месяц",
+  yearly: "каждый год",
+  custom: "свой график",
+};
+
 type AccountOption = { id: string; name: string; currency: string };
 type Source = {
   id: string;
@@ -62,14 +70,14 @@ export function IncomeSourcesSettings({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to create income source");
+        setError(data.error ?? "Не получилось создать источник дохода");
         return;
       }
       formEl.reset();
       setFrequency("monthly");
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -77,7 +85,7 @@ export function IncomeSourcesSettings({
 
   async function archive(id: string, name: string) {
     if (!canArchive) return;
-    if (!window.confirm(`Archive income source “${name}”?`)) return;
+    if (!window.confirm(`Отправить источник дохода «${name}» в архив?`)) return;
     setError(null);
     setPending(true);
     try {
@@ -86,12 +94,12 @@ export function IncomeSourcesSettings({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Archive failed");
+        setError(data.error ?? "Не получилось архивировать");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -108,12 +116,12 @@ export function IncomeSourcesSettings({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Restore failed");
+        setError(data.error ?? "Не получилось восстановить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -124,15 +132,14 @@ export function IncomeSourcesSettings({
   return (
     <section className="grid gap-3 card-soft p-4">
       <div>
-        <h2 className="font-medium">Income sources</h2>
+        <h2 className="font-medium">Источники дохода</h2>
         <p className="text-sm text-muted-foreground">
-          Track expected income streams. Link them when adding income
-          transactions.
+          Ожидаемые поступления. Выбирай источник, когда добавляешь доход.
         </p>
       </div>
 
       {sources.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No income sources yet.</p>
+        <p className="text-sm text-muted-foreground">Источников дохода пока нет.</p>
       ) : (
         <ul className="grid gap-2">
           {sources.map((source) => (
@@ -144,11 +151,12 @@ export function IncomeSourcesSettings({
                 <p className="font-medium">{source.name}</p>
                 <p className="text-sm text-muted-foreground">
                   {displayMoney(source.amount, source.currency)} ·{" "}
-                  {source.frequency} · next {source.next_date}
+                  {FREQUENCY_LABELS[source.frequency] ?? source.frequency} · следующий{" "}
+                  {source.next_date}
                   {accountName.get(source.account_id)
                     ? ` · ${accountName.get(source.account_id)}`
                     : ""}
-                  {source.is_active ? "" : " · archived"}
+                  {source.is_active ? "" : " · в архиве"}
                 </p>
               </div>
               {canManage ? (
@@ -162,7 +170,7 @@ export function IncomeSourcesSettings({
                         disabled={pending}
                         onClick={() => void archive(source.id, source.name)}
                       >
-                        Archive
+                        В архив
                       </Button>
                     ) : null
                   ) : (
@@ -173,7 +181,7 @@ export function IncomeSourcesSettings({
                       disabled={pending}
                       onClick={() => void restore(source.id)}
                     >
-                      Restore
+                      Восстановить
                     </Button>
                   )}
                 </div>
@@ -185,14 +193,14 @@ export function IncomeSourcesSettings({
 
       {canManage && accounts.length > 0 ? (
         <form onSubmit={onCreate} className="grid gap-3 border-t border-border pt-3">
-          <p className="text-sm font-medium">New income source</p>
+          <p className="text-sm font-medium">Новый источник дохода</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-2 sm:col-span-2">
-              <Label htmlFor="is-name">Name</Label>
+              <Label htmlFor="is-name">Название</Label>
               <Input id="is-name" name="name" required maxLength={120} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="is-amount">Typical amount</Label>
+              <Label htmlFor="is-amount">Обычная сумма</Label>
               <Input
                 id="is-amount"
                 name="amount"
@@ -202,7 +210,7 @@ export function IncomeSourcesSettings({
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="is-account">Account</Label>
+              <Label htmlFor="is-account">Счёт</Label>
               <select
                 id="is-account"
                 name="accountId"
@@ -211,7 +219,7 @@ export function IncomeSourcesSettings({
                 defaultValue=""
               >
                 <option value="" disabled>
-                  Select account
+                  Выбери счёт
                 </option>
                 {accounts.map((account) => (
                   <option key={account.id} value={account.id}>
@@ -221,27 +229,27 @@ export function IncomeSourcesSettings({
               </select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="is-frequency">Frequency</Label>
+              <Label htmlFor="is-frequency">Как часто</Label>
               <select
                 id="is-frequency"
                 className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
                 value={frequency}
                 onChange={(event) => setFrequency(event.target.value)}
               >
-                <option value="weekly">Weekly</option>
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-                <option value="daily">Daily</option>
-                <option value="custom">Custom</option>
+                <option value="weekly">Каждую неделю</option>
+                <option value="monthly">Каждый месяц</option>
+                <option value="yearly">Каждый год</option>
+                <option value="daily">Каждый день</option>
+                <option value="custom">Свой график</option>
               </select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="is-next">Next date</Label>
+              <Label htmlFor="is-next">Следующая дата</Label>
               <Input id="is-next" name="nextDate" type="date" required />
             </div>
           </div>
           <Button type="submit" size="sm" disabled={pending}>
-            {pending ? "Saving…" : "Add income source"}
+            {pending ? "Сохраняем…" : "Добавить источник дохода"}
           </Button>
         </form>
       ) : null}

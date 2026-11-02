@@ -28,7 +28,7 @@ export function OfflineBanner() {
       role="status"
       className="border-b border-border bg-muted px-4 py-2 text-center text-sm text-muted-foreground"
     >
-      You are offline. Changes can&apos;t be saved until the connection returns.
+      Нет подключения к интернету. Изменения не сохранятся, пока связь не вернётся.
     </div>
   );
 }

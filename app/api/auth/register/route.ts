@@ -1,6 +1,11 @@
 import { ZodError } from "zod";
 
-import { fromAuthServiceError, fromZodError, jsonError } from "@/lib/auth/errors";
+import {
+  fromAuthServiceError,
+  fromZodError,
+  jsonError,
+  translateAuthMessage,
+} from "@/lib/auth/errors";
 import { createClient } from "@/lib/supabase/server";
 import { registerSchema } from "@/lib/validations/auth";
 import { ensureUserBootstrap } from "@/services/auth-service";
@@ -35,11 +40,11 @@ export async function POST(request: Request) {
     });
 
     if (signUpError) {
-      return jsonError(400, signUpError.message, { code: "AUTH" });
+      return jsonError(400, translateAuthMessage(signUpError.message), { code: "AUTH" });
     }
 
     if (!signUpData.user) {
-      return jsonError(500, "Registration succeeded without a user object");
+      return jsonError(500, "Регистрация прошла, но аккаунт не вернулся — попробуй войти");
     }
 
     // Email confirmation required — no session until the user confirms
@@ -49,7 +54,7 @@ export async function POST(request: Request) {
         needsEmailConfirmation: true,
         userId: signUpData.user.id,
         message:
-          "Check your email to confirm your account, then sign in to finish setup.",
+          "Проверь почту и подтверди аккаунт, а потом войди, чтобы закончить настройку.",
       });
     }
 
@@ -86,7 +91,7 @@ export async function POST(request: Request) {
     }
     return jsonError(
       500,
-      error instanceof Error ? error.message : "Registration failed",
+      error instanceof Error ? error.message : "Не получилось зарегистрироваться",
     );
   }
 }

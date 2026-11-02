@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "Purrfect Home",
     short_name: "Purrfect",
     description:
-      "A cozy home organiser for couples: money, to-dos, schedule, habits and meals.",
+      "Уютный домашний органайзер для пар: деньги, дела, расписание, привычки и питание.",
     start_url: "/app/dashboard",
     scope: "/",
     display: "standalone",

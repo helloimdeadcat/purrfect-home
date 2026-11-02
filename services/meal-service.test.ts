@@ -62,7 +62,7 @@ describe("deleteFood", () => {
     chain.then = (resolve: (v: unknown) => unknown) => resolve({ error: { code: "23503", message: "fk" } });
     const { error } = await deleteFood({ from: () => chain } as never, makeCtx(), FOOD);
     expect(error?.code).toBe("CONFLICT");
-    expect(error?.message).toMatch(/used in the meal plan/);
+    expect(error?.message).toMatch(/есть в плане/);
   });
 });
 
@@ -98,6 +98,6 @@ describe("shoppingText", () => {
       },
       CATEGORY_LABEL,
     );
-    expect(text).toBe("Meat, fish & eggs\n• Яйца — 510 g (≈9 egg)\n\nVegetables\n• Помидоры — 4.94 kg");
+    expect(text).toBe("Мясо, рыба и яйца\n• Яйца — 510 г (≈9 egg)\n\nОвощи\n• Помидоры — 4,94 кг");
   });
 });

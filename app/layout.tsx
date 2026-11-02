@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Fredoka, Geist_Mono, Nunito } from "next/font/google";
+import type { ReactNode } from "react";
 
 import { OfflineBanner } from "@/components/pwa/offline-banner";
 import { ServiceWorkerRegistration } from "@/components/pwa/service-worker-registration";
@@ -27,7 +28,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Purrfect Home",
   description:
-    "A cozy home organiser for couples: money, to-dos, schedule, habits and meals.",
+    "Уютный домашний органайзер для пар: деньги, дела, расписание, привычки и питание.",
   applicationName: "Purrfect Home",
   appleWebApp: {
     capable: true,
@@ -48,10 +49,10 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
-      lang="en"
+      lang="ru"
       className={`${nunito.variable} ${fredoka.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col font-sans">

@@ -81,7 +81,7 @@ export function AssistantChat({ initialQuestion }: { initialQuestion?: string })
         error?: string;
       };
       if (!response.ok) {
-        setError(data.error ?? "The assistant couldn't answer");
+        setError(data.error ?? "Морти не смог ответить");
         return;
       }
       setTurns([
@@ -93,7 +93,7 @@ export function AssistantChat({ initialQuestion }: { initialQuestion?: string })
         },
       ]);
     } catch {
-      setError("Network error");
+      setError("Ошибка сети — проверь подключение");
     } finally {
       setPending(false);
     }
@@ -119,13 +119,13 @@ export function AssistantChat({ initialQuestion }: { initialQuestion?: string })
       });
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
-        updateCard(turnIndex, card.id, { state: "open", error: data.error ?? "Couldn't apply" });
+        updateCard(turnIndex, card.id, { state: "open", error: data.error ?? "Не получилось применить" });
         return;
       }
       updateCard(turnIndex, card.id, { state: "applied" });
       router.refresh();
     } catch {
-      updateCard(turnIndex, card.id, { state: "open", error: "Network error" });
+      updateCard(turnIndex, card.id, { state: "open", error: "Ошибка сети — проверь подключение" });
     }
   }
 
@@ -138,7 +138,7 @@ export function AssistantChat({ initialQuestion }: { initialQuestion?: string })
     <div className="grid gap-4">
       {turns.length === 0 ? (
         <div className="card-soft grid gap-3 p-4">
-          <p className="text-sm text-muted-foreground">Try one of these:</p>
+          <p className="text-sm text-muted-foreground">Попробуй спросить:</p>
           <div className="flex flex-wrap gap-2">
             {QUICK_PROMPTS.map((prompt) => (
               <button
@@ -170,19 +170,19 @@ export function AssistantChat({ initialQuestion }: { initialQuestion?: string })
               {turn.cards?.map((card) => (
                 <div key={card.id} className="grid gap-2 rounded-2xl border border-primary/30 bg-secondary/60 p-3 text-sm">
                   <p>
-                    <span className="font-semibold">Suggestion:</span> {card.summary}
+                    <span className="font-semibold">Предложение:</span> {card.summary}
                   </p>
                   {card.state === "applied" ? (
-                    <p className="font-medium text-income">Applied ♥</p>
+                    <p className="font-medium text-income">Применено ♥</p>
                   ) : card.state === "dismissed" ? (
-                    <p className="text-muted-foreground">Dismissed</p>
+                    <p className="text-muted-foreground">Отклонено</p>
                   ) : (
                     <div className="flex gap-2">
                       <Button type="button" size="sm" disabled={card.state === "applying"} onClick={() => void apply(index, card)}>
-                        {card.state === "applying" ? "Applying…" : "Apply"}
+                        {card.state === "applying" ? "Применяю…" : "Применить"}
                       </Button>
                       <Button type="button" size="sm" variant="ghost" onClick={() => updateCard(index, card.id, { state: "dismissed" })}>
-                        Dismiss
+                        Отклонить
                       </Button>
                     </div>
                   )}
@@ -198,7 +198,7 @@ export function AssistantChat({ initialQuestion }: { initialQuestion?: string })
         ))}
         {pending ? (
           <li className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CatFace className="size-8 animate-pulse" /> Thinking…
+            <CatFace className="size-8 animate-pulse" /> Морти думает…
           </li>
         ) : null}
       </ol>
@@ -222,8 +222,8 @@ export function AssistantChat({ initialQuestion }: { initialQuestion?: string })
           }}
           rows={2}
           maxLength={4000}
-          placeholder="Ask about meals, chores, habits or money…"
-          aria-label="Message"
+          placeholder="Спроси про питание, дела, привычки или деньги…"
+          aria-label="Сообщение"
         />
         <div className="flex items-center justify-between gap-2">
           <button
@@ -234,19 +234,19 @@ export function AssistantChat({ initialQuestion }: { initialQuestion?: string })
               setError(null);
             }}
           >
-            Clear chat
+            Очистить чат
           </button>
           <Button type="submit" disabled={pending || !draft.trim()}>
-            Send
+            Отправить
           </Button>
         </div>
       </form>
       <p className="text-xs text-muted-foreground">
-        Answers come from Google Gemini: your question and the data it looks up
-        (meals, to-dos, habits, balances) are sent to Google. The assistant only
-        suggests changes — nothing happens until you tap Apply. See also{" "}
+        Ответы даёт Google Gemini: твой вопрос и данные, которые Морти смотрит
+        (питание, дела, привычки, балансы), отправляются в Google. Морти только
+        предлагает изменения — ничего не произойдёт, пока ты не нажмёшь «Применить». См. также{" "}
         <Link href="/app/tasks" className="underline underline-offset-4">
-          To-do
+          «Дела»
         </Link>
         .
       </p>

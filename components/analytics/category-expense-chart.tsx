@@ -23,8 +23,8 @@ const COLORS = Array.from({ length: 8 }, (_, i) => `var(--chart-${i + 1})`);
 const MAX_SLICES = COLORS.length;
 
 /**
- * Colours are never cycled: beyond 8 categories the tail folds into "Other"
- * (7 largest + Other), so every slice keeps a distinct, stable hue.
+ * Colours are never cycled: beyond 8 categories the tail folds into "Другое"
+ * (7 largest + Другое), so every slice keeps a distinct, stable hue.
  */
 export function foldSlices(
   slices: { name: string; value: number }[],
@@ -33,7 +33,7 @@ export function foldSlices(
   const sorted = [...slices].sort((a, b) => b.value - a.value);
   const head = sorted.slice(0, MAX_SLICES - 1);
   const rest = sorted.slice(MAX_SLICES - 1).reduce((sum, s) => sum + s.value, 0);
-  return [...head, { name: "Other", value: Math.round(rest * 100) / 100 }];
+  return [...head, { name: "Другое", value: Math.round(rest * 100) / 100 }];
 }
 
 type Props = {
@@ -43,7 +43,7 @@ type Props = {
 
 export function CategoryExpenseChart({ slices, currency }: Props) {
   if (slices.length === 0) {
-    return <ChartEmpty message="No expenses by category in this period." />;
+    return <ChartEmpty message="За этот период нет расходов по категориям." />;
   }
 
   const data = foldSlices(
@@ -57,7 +57,7 @@ export function CategoryExpenseChart({ slices, currency }: Props) {
     <div
       className="h-80 w-full"
       role="img"
-      aria-label="Expense distribution by category"
+      aria-label="Распределение расходов по категориям"
     >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>

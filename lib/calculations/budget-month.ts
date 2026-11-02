@@ -1,5 +1,7 @@
 /** Calendar helpers for monthly budgets (UTC date boundaries). */
 
+import { LOCALE } from "@/lib/locale";
+
 export function monthStartIso(year: number, month: number): string {
   return `${year}-${String(month).padStart(2, "0")}-01`;
 }
@@ -44,7 +46,7 @@ export function shiftYearMonth(
 }
 
 export function monthLabel(year: number, month: number): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(LOCALE, {
     month: "long",
     year: "numeric",
     timeZone: "UTC",

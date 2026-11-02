@@ -10,7 +10,7 @@ export const forecastHorizonPresetSchema = z.enum([
 const dateSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД");
 
 export const forecastQuerySchema = z
   .object({
@@ -29,7 +29,7 @@ export const forecastQuerySchema = z
       if (!data.to) {
         ctx.addIssue({
           code: "custom",
-          message: "Custom horizon requires to",
+          message: "Для своего горизонта укажи конечную дату",
           path: ["to"],
         });
       }

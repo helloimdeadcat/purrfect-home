@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const supabase = await createClient();
     const { data, error } = await previewInvitation(supabase, token);
     if (error) {
-      return jsonError(400, "Invalid invitation", { code: error.code });
+      return jsonError(400, "Приглашение недействительно", { code: error.code });
     }
 
     return Response.json({ preview: data });

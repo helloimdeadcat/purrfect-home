@@ -132,7 +132,7 @@ export async function getAnalyticsReport(
       data: null,
       error: err(
         "VALIDATION",
-        error instanceof Error ? error.message : "Invalid period",
+        error instanceof Error ? error.message : "Неверный период",
       ),
     };
   }
@@ -161,7 +161,7 @@ export async function getAnalyticsReport(
       return { data: null, error: err("DB", accountError.message) };
     }
     if (!account) {
-      return { data: null, error: err("VALIDATION", "Account not found") };
+      return { data: null, error: err("VALIDATION", "Счёт не найден") };
     }
   }
 
@@ -205,7 +205,7 @@ export async function getAnalyticsReport(
   ).toUpperCase();
 
   if (!/^[A-Z]{3}$/.test(currency)) {
-    return { data: null, error: err("VALIDATION", "Invalid currency") };
+    return { data: null, error: err("VALIDATION", "Неверная валюта") };
   }
 
   const currentRows = filterAnalyticsTxns(txns, {

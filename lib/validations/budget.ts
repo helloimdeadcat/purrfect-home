@@ -5,14 +5,14 @@ import { normalizeMoneyInput } from "@/lib/calculations/money";
 const moneyInputSchema = z
   .string()
   .trim()
-  .min(1, "Amount is required")
+  .min(1, "Укажи сумму")
   .transform((value, ctx) => {
     try {
       const normalized = normalizeMoneyInput(value);
       if (normalized.startsWith("-") || normalized === "0.00") {
         ctx.addIssue({
           code: "custom",
-          message: "Budget limit must be greater than zero",
+          message: "Лимит бюджета должен быть больше нуля",
         });
         return z.NEVER;
       }
@@ -20,7 +20,7 @@ const moneyInputSchema = z
     } catch {
       ctx.addIssue({
         code: "custom",
-        message: "Enter a valid amount with up to 2 decimals",
+        message: "Введи корректную сумму (не больше 2 знаков после запятой)",
       });
       return z.NEVER;
     }
@@ -28,10 +28,10 @@ const moneyInputSchema = z
 
 const yearMonthSchema = z
   .string()
-  .regex(/^\d{4}-\d{2}$/, "Month must be YYYY-MM");
+  .regex(/^\d{4}-\d{2}$/, "Формат месяца: ГГГГ-ММ");
 
 export const createBudgetSchema = z.object({
-  categoryId: z.uuid("Select a category"),
+  categoryId: z.uuid("Выбери категорию"),
   amount: moneyInputSchema,
   /** Target month for the monthly budget (YYYY-MM). Defaults to current UTC month. */
   month: yearMonthSchema.optional(),
@@ -51,7 +51,7 @@ export const updateBudgetSchema = z
       value.name !== undefined ||
       value.categoryId !== undefined ||
       value.isActive !== undefined,
-    { message: "No changes provided" },
+    { message: "Нет изменений" },
   );
 
 export type CreateBudgetInput = z.infer<typeof createBudgetSchema>;

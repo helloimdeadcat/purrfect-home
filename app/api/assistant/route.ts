@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import { AiError } from "@/lib/ai/client";
 import { getAiConfig } from "@/lib/ai/config";
-import { assistantLimiter } from "@/lib/ai/rate-limit";
+import { takeAiQuota } from "@/lib/ai/rate-limit";
 import { handleRouteError, requireHousehold } from "@/lib/auth/api";
 import { jsonError } from "@/lib/auth/errors";
 import { runAssistant } from "@/services/assistant-service";
@@ -12,8 +12,11 @@ const bodySchema = z.object({
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().trim().min(1).max(4000) }))
     .min(1)
     .max(20)
-    .refine((m) => m[m.length - 1].role === "user", { message: "The last message must be from the user" }),
+    .refine((m) => m[m.length - 1].role === "user", { message: "Последнее сообщение должно быть от тебя" }),
 });
+
+/** A turn has a hard 75 s deadline (TURN_BUDGET_MS); keep headroom for the rest. */
+export const maxDuration = 90;
 
 /** POST { messages } → { reply, proposals } — proposals are never applied here. */
 export async function POST(request: Request) {
@@ -23,10 +26,10 @@ export async function POST(request: Request) {
 
     const config = getAiConfig();
     if (!config) {
-      return jsonError(503, "The assistant isn't set up yet: add AI_API_KEY to .env.local and restart the app.");
+      return jsonError(503, "Морти пока не настроен: добавь AI_API_KEY в .env.local и перезапусти приложение.");
     }
-    if (!assistantLimiter.take(auth.value.ctx.user.id)) {
-      return jsonError(429, "That's a lot of questions — take a short break and try again in a few minutes ♥");
+    if (!(await takeAiQuota(auth.value.supabase, auth.value.ctx.user.id, "assistant"))) {
+      return jsonError(429, "Ого, сколько вопросов! Сделай небольшой перерыв и попробуй снова через пару минут ♥");
     }
 
     const { messages } = bodySchema.parse(await request.json());

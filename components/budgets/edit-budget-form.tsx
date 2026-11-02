@@ -35,13 +35,13 @@ export function EditBudgetForm({ budgetId, currentAmount, currency }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to update budget");
+        setError(data.error ?? "Не получилось обновить бюджет");
         return;
       }
       setOpen(false);
       router.refresh();
     } catch {
-      setError("Network error — check your connection and try again");
+      setError("Ошибка сети — проверь подключение и попробуй ещё раз");
     } finally {
       setPending(false);
     }
@@ -55,7 +55,7 @@ export function EditBudgetForm({ budgetId, currentAmount, currency }: Props) {
         size="sm"
         onClick={() => setOpen(true)}
       >
-        Edit
+        Изменить
       </Button>
     );
   }
@@ -64,7 +64,7 @@ export function EditBudgetForm({ budgetId, currentAmount, currency }: Props) {
     <form onSubmit={onSubmit} className="flex flex-wrap items-end gap-2">
       <div className="grid gap-1">
         <Label htmlFor={`edit-${budgetId}`} className="sr-only">
-          New limit ({currency})
+          Новый лимит ({currency})
         </Label>
         <Input
           id={`edit-${budgetId}`}
@@ -76,7 +76,7 @@ export function EditBudgetForm({ budgetId, currentAmount, currency }: Props) {
         />
       </div>
       <Button type="submit" size="sm" disabled={pending}>
-        {pending ? "Saving…" : "Save"}
+        {pending ? "Сохраняем…" : "Сохранить"}
       </Button>
       <Button
         type="button"
@@ -84,7 +84,7 @@ export function EditBudgetForm({ budgetId, currentAmount, currency }: Props) {
         variant="ghost"
         onClick={() => setOpen(false)}
       >
-        Cancel
+        Отмена
       </Button>
       {error ? (
         <p className="w-full text-xs text-destructive" role="alert">

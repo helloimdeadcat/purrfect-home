@@ -14,12 +14,14 @@ A cozy home organiser for couples (repo folder: `family-finance`).
   one-click import of the household's 7-day plan (`lib/meals/seven-day-plan.ts`).
 - **Everywhere:** in-app notifications and an activity log.
 
-- **Assistant ✨:** a chat (Google Gemini free tier by default, any
+- **Morty ✨ (Морти):** a chat (Google Gemini free tier by default, any
   OpenAI-compatible endpoint works) that reads your meals, to-dos, habits and
   balances, suggests recipes from a meal's foods, and proposes changes as
-  cards — nothing is written until you tap Apply. Optional: set `AI_API_KEY`
-  (free key at https://aistudio.google.com/apikey); `AI_BASE_URL` / `AI_MODEL`
-  override the defaults. Chat history stays in the browser tab.
+  cards — nothing is written until you tap «Применить». Optional: set `AI_API_KEY`
+  (free key at https://aistudio.google.com/apikey); `AI_BASE_URL` / `AI_MODEL` /
+  `AI_FALLBACK_MODEL` override the defaults. `npm run check:ai` checks the key
+  live. Chat history stays in the browser tab.
+- The interface is in Russian (`lib/locale.ts`). Requires Node.js ≥ 22.12.
 
 Stack: Next.js 16 (App Router, `proxy.ts`), React 19, TypeScript, Tailwind 4 +
 shadcn/ui, Supabase (Auth, Postgres with RLS, Storage), Zod 4, Recharts,

@@ -26,15 +26,15 @@ export default async function InvitePage({ searchParams }: Props) {
             Purrfect Home
           </Link>
         </CardTitle>
-        <CardDescription>Household invitation</CardDescription>
+        <CardDescription>Приглашение в семью</CardDescription>
       </CardHeader>
       <CardContent>
         {!token ? (
           <p className="text-sm text-muted-foreground">
-            Missing invitation token. Ask your household owner for a new invite
-            link, or{" "}
+            В ссылке нет токена приглашения. Попроси владельца семьи прислать
+            новую ссылку или{" "}
             <Link href="/login" className="underline underline-offset-4">
-              sign in
+              войди
             </Link>
             .
           </p>

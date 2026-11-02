@@ -3,7 +3,7 @@ import { Heart } from "@/components/cute/illustrations";
 export default function AppLoading() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading…</span>
+      <span className="sr-only">Загрузка…</span>
       <Heart className="animate-heart mx-auto size-8 text-primary" />
 
       <div className="h-8 w-48 animate-pulse rounded-md bg-muted" />

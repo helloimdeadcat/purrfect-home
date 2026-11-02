@@ -3,7 +3,47 @@ import Link from "next/link";
 import { ForecastBalanceChart } from "@/components/forecast/forecast-balance-chart";
 import { ForecastHorizonFilters } from "@/components/forecast/forecast-horizon-filters";
 import { displayMoney } from "@/lib/calculations/money";
+import { LOCALE } from "@/lib/locale";
 import type { ForecastReport } from "@/services/forecast-service";
+
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+});
+
+function formatDay(iso: string): string {
+  const date = new Date(`${iso}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? iso : dayFormat.format(date);
+}
+
+const SOURCE_LABELS: Record<string, string> = {
+  occurrence: "платёж",
+  projected: "по графику",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: "ждёт",
+  overdue: "просрочено",
+  paid: "оплачено",
+  skipped: "пропущено",
+  scheduled: "запланировано",
+  empty: "пусто",
+  under: "в пределах",
+  warning: "почти лимит",
+  reached: "лимит достигнут",
+  over: "перерасход",
+};
+
+function monthTitle(key: string): string {
+  const match = /^(\d{4})-(\d{2})$/.exec(key);
+  if (!match) return key;
+  return new Intl.DateTimeFormat(LOCALE, {
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(Number(match[1]), Number(match[2]) - 1, 1)));
+}
 
 type Props = {
   report: ForecastReport;
@@ -42,15 +82,15 @@ export function ForecastPanel({
       <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="font-medium">Forecast &amp; Safe-to-Spend</h2>
+            <h2 className="font-medium">Прогноз и «Можно потратить» 🔮</h2>
             <span className="rounded-md border border-border px-1.5 py-0.5 text-xs text-muted-foreground">
-              Estimate
+              Оценка
             </span>
           </div>
           <p className="text-sm text-muted-foreground">
-            {report.today} → {report.range.end} · {report.timezone}
+            {formatDay(report.today)} → {formatDay(report.range.end)} · {report.timezone}
             {!report.reserveConfigured
-              ? " · reserve not configured (0.00)"
+              ? " · резерв не задан (0,00)"
               : ""}
           </p>
         </div>
@@ -59,7 +99,7 @@ export function ForecastPanel({
             href={`/app/analytics?horizon=${report.horizon}&currency=${selectedCurrency}`}
             className="text-sm text-muted-foreground underline-offset-4 hover:underline"
           >
-            Full forecast
+            Весь прогноз
           </Link>
         ) : null}
       </div>
@@ -76,64 +116,64 @@ export function ForecastPanel({
 
       {!primary ? (
         <p className="text-sm text-muted-foreground">
-          No balances available for this currency.
+          Для этой валюты пока нет балансов.
         </p>
       ) : (
         <>
           <div className="grid gap-3 sm:grid-cols-3">
             <Metric
-              label="Current balance"
+              label="Текущий баланс"
               value={displayMoney(primary.currentBalance, primary.currency)}
-              hint="Actual"
+              hint="Факт"
             />
             <Metric
-              label="Forecast balance"
+              label="Прогноз баланса"
               value={displayMoney(primary.forecastBalance, primary.currency)}
-              hint="Forecast"
+              hint="Прогноз"
             />
             <Metric
-              label="Safe-to-Spend"
+              label="Можно потратить"
               value={displayMoney(primary.safeToSpend, primary.currency)}
-              hint="Estimate"
+              hint="Оценка"
               tone={primary.isDeficit ? "danger" : "default"}
             />
           </div>
 
           {primary.isDeficit ? (
             <p className="text-sm text-destructive" role="status">
-              Deficit of{" "}
-              {displayMoney(primary.deficitAmount, primary.currency)} — planned
-              outflows exceed current balance for this horizon. Value is not
-              masked to zero.
+              Не хватает{" "}
+              {displayMoney(primary.deficitAmount, primary.currency)} — запланированные
+              расходы за этот период больше текущего баланса. Мы честно
+              показываем минус, а не ноль.
             </p>
           ) : null}
 
           <details className="rounded-lg border border-border px-3 py-2 text-sm">
             <summary className="cursor-pointer font-medium">
-              Why this Safe-to-Spend?
+              Откуда такая сумма «Можно потратить»?
             </summary>
             <div className="mt-2 grid gap-1 text-muted-foreground">
               <p>
-                Starting balance:{" "}
+                Баланс сейчас:{" "}
                 <span className="tabular-nums text-foreground">
                   {displayMoney(primary.currentBalance, primary.currency)}
                 </span>
               </p>
               <p>
-                − Mandatory outflows:{" "}
+                − Обязательные платежи:{" "}
                 <span className="tabular-nums text-foreground">
                   {displayMoney(primary.mandatoryOutflows, primary.currency)}
                 </span>
               </p>
               <p>
-                − Reserve:{" "}
+                − Резерв:{" "}
                 <span className="tabular-nums text-foreground">
                   {displayMoney(primary.reserve, primary.currency)}
-                </span>{" "}
-                (not configured)
+                </span>
+                {!report.reserveConfigured ? " (не задан)" : ""}
               </p>
               <p>
-                = Safe-to-Spend:{" "}
+                = Можно потратить:{" "}
                 <span className="tabular-nums text-foreground">
                   {displayMoney(primary.safeToSpend, primary.currency)}
                 </span>
@@ -141,8 +181,8 @@ export function ForecastPanel({
               <p className="pt-1">{report.formulas.safeToSpend}</p>
               <p>{report.formulas.forecastBalance}</p>
               <p>
-                Expected income ({displayMoney(primary.expectedIncome, primary.currency)})
-                lifts forecast balance only — never Safe-to-Spend.
+                Ожидаемый доход ({displayMoney(primary.expectedIncome, primary.currency)})
+                повышает только прогноз баланса, но не «Можно потратить».
               </p>
             </div>
           </details>
@@ -150,7 +190,7 @@ export function ForecastPanel({
           {!compact ? (
             <div className="grid gap-3">
               <h3 className="text-sm font-medium">
-                Forecast balance path ({primary.currency})
+                Как будет меняться баланс ({primary.currency})
               </h3>
               <ForecastBalanceChart
                 series={report.cashFlowByCurrency[primary.currency] ?? []}
@@ -160,10 +200,10 @@ export function ForecastPanel({
           ) : null}
 
           <div className="grid gap-2">
-            <h3 className="text-sm font-medium">Upcoming obligations</h3>
+            <h3 className="text-sm font-medium">Скоро к оплате</h3>
             {obligations.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                No eligible recurring expenses in this horizon.
+                В этом периоде нет регулярных расходов 😺
               </p>
             ) : (
               <ul className="grid gap-1">
@@ -173,10 +213,10 @@ export function ForecastPanel({
                     className="flex items-center justify-between gap-3 text-sm"
                   >
                     <span className="min-w-0 truncate">
-                      {event.date} · {event.name}
+                      {formatDay(event.date)} · {event.name}
                       <span className="text-muted-foreground">
                         {" "}
-                        ({event.source}/{event.status})
+                        ({SOURCE_LABELS[event.source] ?? event.source}, {STATUS_LABELS[event.status] ?? event.status})
                       </span>
                     </span>
                     <span className="shrink-0 tabular-nums">
@@ -191,10 +231,10 @@ export function ForecastPanel({
           {nearBudgets.length > 0 ? (
             <div className="grid gap-2">
               <h3 className="text-sm font-medium">
-                Budgets near limit ({report.budgetHeadroom.month})
+                Бюджеты на грани ({monthTitle(report.budgetHeadroom.month)})
               </h3>
               <p className="text-xs text-muted-foreground">
-                Informational only — not deducted from Safe-to-Spend.
+                Только для справки — из «Можно потратить» не вычитается.
               </p>
               <ul className="grid gap-1">
                 {nearBudgets.map((row) => (
@@ -203,7 +243,7 @@ export function ForecastPanel({
                     className="flex justify-between gap-3 text-sm"
                   >
                     <span>
-                      {row.categoryName ?? "Category"} · {row.status}
+                      {row.categoryName ?? "Категория"} · {STATUS_LABELS[row.status] ?? row.status}
                     </span>
                     <span className="tabular-nums">
                       {displayMoney(row.spent, row.currency)} /{" "}
@@ -218,12 +258,12 @@ export function ForecastPanel({
           {!compact && report.excludedEvents.length > 0 ? (
             <details className="text-sm">
               <summary className="cursor-pointer text-muted-foreground">
-                Excluded events ({report.excludedEvents.length})
+                Не учтено в прогнозе ({report.excludedEvents.length})
               </summary>
               <ul className="mt-2 grid gap-1">
                 {report.excludedEvents.slice(0, 30).map((event) => (
                   <li key={event.id} className="text-muted-foreground">
-                    {event.date} · {event.name}: {event.reason}
+                    {formatDay(event.date)} · {event.name}: {event.reason}
                   </li>
                 ))}
               </ul>

@@ -82,7 +82,7 @@ export async function getCalendarMonth(
   month: number,
 ): Promise<{ data: CalendarMonthView | null; error: ServiceError | null }> {
   if (month < 1 || month > 12 || year < 1970 || year > 2100) {
-    return { data: null, error: err("VALIDATION", "Invalid month") };
+    return { data: null, error: err("VALIDATION", "Неверный месяц") };
   }
 
   const rangeStart = monthStartIso(year, month);
@@ -194,7 +194,7 @@ export function buildCalendarEvents(input: {
 
   for (const occ of input.occurrences) {
     const payment = payMap.get(occ.recurring_payment_id);
-    const title = payment?.name ?? "Recurring payment";
+    const title = payment?.name ?? "Регулярный платёж";
     const amount = asMoney(occ.amount ?? payment?.amount ?? "0.00");
     const currency = payment?.currency ?? input.fallbackCurrency;
     const cashFlow =

@@ -3,7 +3,7 @@ import { z } from "zod";
 const dateSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД");
 
 export const habitFrequencySchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("daily") }),
@@ -11,7 +11,7 @@ export const habitFrequencySchema = z.discriminatedUnion("kind", [
     kind: z.literal("days"),
     weekdays: z
       .array(z.number().int().min(1).max(7))
-      .min(1, "Pick at least one day")
+      .min(1, "Выбери хотя бы один день")
       .max(7)
       .transform((days) => [...new Set(days)].sort()),
   }),
@@ -22,13 +22,13 @@ export const habitGoalSchema = z.discriminatedUnion("kind", [
   z.object({ kind: z.literal("check") }),
   z.object({
     kind: z.literal("count"),
-    target: z.number().positive("Target must be above zero").max(1_000_000),
+    target: z.number().positive("Цель должна быть больше нуля").max(1_000_000),
     unit: z.string().trim().max(20).nullable().default(null),
   }),
 ]);
 
 const habitFields = {
-  title: z.string().trim().min(1, "Name is required").max(120),
+  title: z.string().trim().min(1, "Нужно название").max(120),
   emoji: z.string().trim().max(8).nullable().optional(),
   /** null = for everyone */
   ownerMemberId: z.uuid().nullable().optional(),
@@ -49,7 +49,7 @@ export const updateHabitSchema = z
     isArchived: z.boolean().optional(),
   })
   .refine((value) => Object.values(value).some((entry) => entry !== undefined), {
-    message: "No changes provided",
+    message: "Нет изменений",
   });
 
 /** value 0 (or null) clears the day. */

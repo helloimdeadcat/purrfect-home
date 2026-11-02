@@ -12,7 +12,6 @@ import {
 import { getSessionUser } from "@/lib/auth/session";
 import {
   dateFromIsoDay,
-  formatYearMonth,
   parseYearMonth,
 } from "@/lib/calculations/budget-month";
 import { dayIso } from "@/lib/calculations/calendar-grid";
@@ -21,6 +20,23 @@ import { cn } from "@/lib/utils";
 import { getCalendarMonth } from "@/services/calendar-service";
 import { listDueOccurrences } from "@/services/recurring-service";
 import { getHouseholdToday } from "@/services/settings-service";
+import { LOCALE } from "@/lib/locale";
+
+const pluralRules = new Intl.PluralRules(LOCALE);
+
+function plural(
+  count: number,
+  forms: { one: string; few: string; many: string },
+): string {
+  const rule = pluralRules.select(count);
+  return rule === "one" ? forms.one : rule === "few" ? forms.few : forms.many;
+}
+
+const monthTitleFormat = new Intl.DateTimeFormat(LOCALE, {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
 
 type Props = {
   searchParams: Promise<{ month?: string; day?: string }>;
@@ -51,7 +67,7 @@ export default async function CalendarPage({ searchParams }: Props) {
   const due = dueResult.data ?? [];
   const dueByOccurrenceId = new Map(due.map((item) => [item.id, item]));
 
-  const monthKey = formatYearMonth(year, month);
+  const monthTitle = monthTitleFormat.format(new Date(Date.UTC(year, month - 1, 1)));
   const defaultDay =
     calendar &&
     params.day &&
@@ -95,17 +111,17 @@ export default async function CalendarPage({ searchParams }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Calendar</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Календарь</h1>
           <p className="text-muted-foreground">
-            Payment calendar for {ctx.householdName}. Projected recurring dates
-            are shown but never posted until you confirm them.
+            Календарь платежей для «{ctx.householdName}». Будущие регулярные
+            платежи видны здесь, но проводятся, только когда ты их подтвердишь.
           </p>
         </div>
         <Link
           href="/app/recurring"
           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
         >
-          Recurring
+          Регулярные платежи
         </Link>
       </div>
 
@@ -125,13 +141,13 @@ export default async function CalendarPage({ searchParams }: Props) {
               className="grid gap-2 text-sm text-muted-foreground sm:grid-cols-2"
             >
               <p>
-                Actual income this month ({code}):{" "}
+                Фактический доход за месяц ({code}):{" "}
                 <span className="font-medium text-foreground tabular-nums">
                   {displayMoney(totals.income, code)}
                 </span>
               </p>
               <p>
-                Actual expenses this month ({code}):{" "}
+                Фактические расходы за месяц ({code}):{" "}
                 <span className="font-medium text-foreground tabular-nums">
                   {displayMoney(totals.expense, code)}
                 </span>
@@ -157,8 +173,10 @@ export default async function CalendarPage({ searchParams }: Props) {
           ) : null}
 
           <p className="text-xs text-muted-foreground">
-            Showing {calendar.events.length} events for {monthKey}. Transfers
-            are omitted. Unconfirmed recurring items are not counted in totals.
+            {calendar.events.length}{" "}
+            {plural(calendar.events.length, { one: "событие", few: "события", many: "событий" })}{" "}
+            за {monthTitle}. Переводы не показаны. Неподтверждённые регулярные
+            платежи в итогах не учитываются.
           </p>
         </>
       ) : null}

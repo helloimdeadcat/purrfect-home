@@ -76,13 +76,13 @@ export function EditRecurringForm({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to update");
+        setError(data.error ?? "Не получилось сохранить");
         return;
       }
       onClose();
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -93,10 +93,10 @@ export function EditRecurringForm({
       onSubmit={onSubmit}
       className="grid gap-3 rounded-lg border border-border p-3"
     >
-      <p className="text-sm font-medium">Edit template</p>
+      <p className="text-sm font-medium">Изменить шаблон</p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor={`edit-name-${payment.id}`}>Name</Label>
+          <Label htmlFor={`edit-name-${payment.id}`}>Название</Label>
           <Input
             id={`edit-name-${payment.id}`}
             name="name"
@@ -106,7 +106,7 @@ export function EditRecurringForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor={`edit-type-${payment.id}`}>Type</Label>
+          <Label htmlFor={`edit-type-${payment.id}`}>Тип</Label>
           <select
             id={`edit-type-${payment.id}`}
             className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -115,12 +115,12 @@ export function EditRecurringForm({
               setType(event.target.value as "expense" | "income")
             }
           >
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
+            <option value="expense">Расход</option>
+            <option value="income">Доход</option>
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor={`edit-amount-${payment.id}`}>Amount</Label>
+          <Label htmlFor={`edit-amount-${payment.id}`}>Сумма</Label>
           <Input
             id={`edit-amount-${payment.id}`}
             name="amount"
@@ -130,7 +130,7 @@ export function EditRecurringForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor={`edit-account-${payment.id}`}>Account</Label>
+          <Label htmlFor={`edit-account-${payment.id}`}>Счёт</Label>
           <select
             id={`edit-account-${payment.id}`}
             name="accountId"
@@ -146,7 +146,7 @@ export function EditRecurringForm({
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor={`edit-category-${payment.id}`}>Category</Label>
+          <Label htmlFor={`edit-category-${payment.id}`}>Категория</Label>
           <select
             id={`edit-category-${payment.id}`}
             name="categoryId"
@@ -162,7 +162,7 @@ export function EditRecurringForm({
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor={`edit-frequency-${payment.id}`}>Frequency</Label>
+          <Label htmlFor={`edit-frequency-${payment.id}`}>Как часто</Label>
           <select
             id={`edit-frequency-${payment.id}`}
             className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -173,16 +173,16 @@ export function EditRecurringForm({
               )
             }
           >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-            <option value="daily">Daily</option>
-            <option value="custom">Custom (days)</option>
+            <option value="weekly">Каждую неделю</option>
+            <option value="monthly">Каждый месяц</option>
+            <option value="yearly">Каждый год</option>
+            <option value="daily">Каждый день</option>
+            <option value="custom">Свой интервал (дни)</option>
           </select>
         </div>
         {frequency === "custom" ? (
           <div className="grid gap-2">
-            <Label htmlFor={`edit-interval-${payment.id}`}>Interval (days)</Label>
+            <Label htmlFor={`edit-interval-${payment.id}`}>Интервал (дни)</Label>
             <Input
               id={`edit-interval-${payment.id}`}
               name="intervalDays"
@@ -194,7 +194,7 @@ export function EditRecurringForm({
           </div>
         ) : null}
         <div className="grid gap-2">
-          <Label htmlFor={`edit-end-${payment.id}`}>End date</Label>
+          <Label htmlFor={`edit-end-${payment.id}`}>Дата окончания</Label>
           <Input
             id={`edit-end-${payment.id}`}
             name="endDate"
@@ -203,7 +203,7 @@ export function EditRecurringForm({
           />
         </div>
         <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor={`edit-desc-${payment.id}`}>Description</Label>
+          <Label htmlFor={`edit-desc-${payment.id}`}>Описание</Label>
           <Textarea
             id={`edit-desc-${payment.id}`}
             name="description"
@@ -219,10 +219,10 @@ export function EditRecurringForm({
             className="mt-0.5"
           />
           <span>
-            Mandatory payment
+            Обязательный платёж
             <span className="block text-muted-foreground">
-              Reserved from Safe-to-Spend. Optional payments only affect the
-              forecast balance.
+              Вычитается из «Можно потратить». Необязательные платежи влияют
+              только на прогноз баланса.
             </span>
           </span>
         </label>
@@ -234,7 +234,7 @@ export function EditRecurringForm({
       ) : null}
       <div className="flex flex-wrap gap-2">
         <Button type="submit" size="sm" disabled={pending}>
-          {pending ? "Saving…" : "Save"}
+          {pending ? "Сохраняем…" : "Сохранить"}
         </Button>
         <Button
           type="button"
@@ -243,7 +243,7 @@ export function EditRecurringForm({
           disabled={pending}
           onClick={onClose}
         >
-          Cancel
+          Отмена
         </Button>
       </div>
     </form>

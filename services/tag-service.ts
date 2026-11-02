@@ -54,7 +54,7 @@ export async function createTag(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot create tags"),
+      error: err("FORBIDDEN", "Наблюдатели не могут создавать метки"),
     };
   }
 
@@ -74,12 +74,12 @@ export async function createTag(
     if (error?.code === "23505") {
       return {
         data: null,
-        error: err("CONFLICT", "A tag with this name already exists"),
+        error: err("CONFLICT", "Метка с таким названием уже есть"),
       };
     }
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create tag"),
+      error: err("DB", error?.message ?? "Не получилось создать метку"),
     };
   }
   return { data: data as TagRow, error: null };
@@ -94,7 +94,7 @@ export async function updateTag(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot update tags"),
+      error: err("FORBIDDEN", "Наблюдатели не могут менять метки"),
     };
   }
 
@@ -109,7 +109,7 @@ export async function updateTag(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Tag not found") };
+    return { data: null, error: err("NOT_FOUND", "Метка не найдена") };
   }
 
   const patch: Database["public"]["Tables"]["tags"]["Update"] = {};
@@ -129,12 +129,12 @@ export async function updateTag(
     if (error?.code === "23505") {
       return {
         data: null,
-        error: err("CONFLICT", "A tag with this name already exists"),
+        error: err("CONFLICT", "Метка с таким названием уже есть"),
       };
     }
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update tag"),
+      error: err("DB", error?.message ?? "Не получилось обновить метку"),
     };
   }
   return { data: data as TagRow, error: null };
@@ -149,7 +149,7 @@ export async function archiveOrDeleteTag(
   if (!canAdmin(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Only owners and admins can remove tags"),
+      error: err("FORBIDDEN", "Удалять метки могут только владелец и админы"),
     };
   }
 
@@ -164,7 +164,7 @@ export async function archiveOrDeleteTag(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Tag not found") };
+    return { data: null, error: err("NOT_FOUND", "Метка не найдена") };
   }
 
   const { count, error: countError } = await supabase
@@ -202,7 +202,7 @@ export async function setTransactionTags(
   tagIds: string[],
 ): Promise<{ error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { error: err("FORBIDDEN", "Viewers cannot tag transactions") };
+    return { error: err("FORBIDDEN", "Наблюдатели не могут ставить метки операциям") };
   }
 
   const { data: tx, error: txError } = await supabase
@@ -214,7 +214,7 @@ export async function setTransactionTags(
     .maybeSingle();
 
   if (txError) return { error: err("DB", txError.message) };
-  if (!tx) return { error: err("NOT_FOUND", "Transaction not found") };
+  if (!tx) return { error: err("NOT_FOUND", "Операция не найдена") };
 
   const uniqueIds = [...new Set(tagIds)];
   if (uniqueIds.length > 0) {
@@ -226,10 +226,10 @@ export async function setTransactionTags(
 
     if (tagsError) return { error: err("DB", tagsError.message) };
     if ((tags ?? []).length !== uniqueIds.length) {
-      return { error: err("VALIDATION", "One or more tags were not found") };
+      return { error: err("VALIDATION", "Некоторые метки не найдены") };
     }
     if ((tags ?? []).some((tag) => !(tag as { is_active?: boolean }).is_active)) {
-      return { error: err("VALIDATION", "Cannot assign an archived tag") };
+      return { error: err("VALIDATION", "Нельзя поставить метку из архива") };
     }
   }
 

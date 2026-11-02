@@ -61,7 +61,7 @@ describe("runAssistant", () => {
 
     expect(result.reply).toBe("Предлагаю добавить тренировку в четверг ♥");
     expect(result.proposals).toHaveLength(1);
-    expect(result.proposals[0].summary).toBe('Add "Gym" for Alex · 2026-10-29 19:00');
+    expect(result.proposals[0].summary).toBe("Добавить «Gym» · Alex · 2026-10-29 19:00");
     expect(createTask).not.toHaveBeenCalled();
     // The model is told the card awaits the user, and sees the system rules.
     expect(requests[0].messages[0].role).toBe("system");
@@ -84,6 +84,18 @@ describe("runAssistant", () => {
     const { fetchImpl } = scriptedFetch([call("get_agenda", { from: "2026-10-26", to: "2026-12-31" })]);
     const result = await runAssistant({} as never, makeCtx(), [{ role: "user", content: "loop" }], config, fetchImpl);
     expect(fetchImpl).toHaveBeenCalledTimes(5);
-    expect(result.reply).toMatch(/couldn't finish/);
+    expect(result.reply).toMatch(/не получилось/);
+  });
+
+  it("starts no new round once the turn's time budget is spent", async () => {
+    const { fetchImpl } = scriptedFetch([call("get_agenda", { from: "2026-10-26", to: "2026-10-27" })]);
+    let clock = 0;
+    const now = () => {
+      clock += 40_000; // the first round already took longer than the budget
+      return clock;
+    };
+    const result = await runAssistant({} as never, makeCtx(), [{ role: "user", content: "slow" }], config, fetchImpl, now);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(result.reply).toMatch(/не успел/);
   });
 });

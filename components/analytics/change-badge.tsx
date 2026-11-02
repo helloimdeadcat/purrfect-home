@@ -1,4 +1,10 @@
 import type { PercentChangeResult } from "@/lib/calculations/analytics";
+import { LOCALE } from "@/lib/locale";
+
+const percentFormat = new Intl.NumberFormat(LOCALE, {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
+});
 
 export function ChangeBadge({
   label,
@@ -7,16 +13,16 @@ export function ChangeBadge({
   label: string;
   change: PercentChangeResult;
 }) {
-  let text = "n/a";
-  if (change.kind === "equal_zero") text = "no change (both zero)";
+  let text = "н/д";
+  if (change.kind === "equal_zero") text = "без изменений (оба нуля)";
   else if (change.kind === "from_zero") {
     text =
       change.direction === "up"
-        ? "new activity vs zero prior"
-        : "negative vs zero prior";
+        ? "рост с нуля"
+        : "минус при нуле раньше";
   } else {
     const sign = change.percent > 0 ? "+" : "";
-    text = `${sign}${change.percent.toFixed(1)}% vs prior period`;
+    text = `${sign}${percentFormat.format(change.percent)}% к прошлому периоду`;
   }
 
   return (

@@ -17,7 +17,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!auth.ok) return auth.response;
 
     const { id } = await context.params;
-    if (!id) return jsonError(400, "Account id is required");
+    if (!id) return jsonError(400, "Нужен id счёта");
 
     const body: unknown = await request.json();
     const input = updateAccountSchema.parse(body);
@@ -42,7 +42,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     if (!auth.ok) return auth.response;
 
     const { id } = await context.params;
-    if (!id) return jsonError(400, "Account id is required");
+    if (!id) return jsonError(400, "Нужен id счёта");
 
     const { error } = await deactivateAccount(
       auth.value.supabase,

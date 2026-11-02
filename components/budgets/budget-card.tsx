@@ -12,15 +12,15 @@ type Props = {
 function statusLabel(budget: BudgetWithProgress): string {
   switch (budget.progress.status) {
     case "empty":
-      return "No spending yet";
+      return "Пока без трат";
     case "under":
-      return "On track";
+      return "Всё по плану";
     case "warning":
-      return "Approaching limit";
+      return "Почти у лимита";
     case "reached":
-      return "Limit reached";
+      return "Лимит исчерпан";
     case "over":
-      return `Over by ${displayMoney(budget.overspent, budget.currency)}`;
+      return `Перерасход ${displayMoney(budget.overspent, budget.currency)}`;
     default:
       return "";
   }
@@ -57,19 +57,19 @@ export function BudgetCard({ budget, canManage }: Props) {
 
       <div className="grid grid-cols-3 gap-2 text-sm [&>div]:min-w-0 [&_p]:break-words">
         <div>
-          <p className="text-muted-foreground">Spent</p>
+          <p className="text-muted-foreground">Потрачено</p>
           <p className="font-medium tabular-nums">
             {displayMoney(progress.spent, budget.currency)}
           </p>
         </div>
         <div>
-          <p className="text-muted-foreground">Limit</p>
+          <p className="text-muted-foreground">Лимит</p>
           <p className="font-medium tabular-nums">
             {displayMoney(progress.limit, budget.currency)}
           </p>
         </div>
         <div>
-          <p className="text-muted-foreground">Left</p>
+          <p className="text-muted-foreground">Осталось</p>
           <p className="font-medium tabular-nums">
             {displayMoney(progress.remaining, budget.currency)}
           </p>
@@ -77,11 +77,11 @@ export function BudgetCard({ budget, canManage }: Props) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        {Math.min(progress.percentUsed, 999)}% used
+        Использовано {Math.min(progress.percentUsed, 999)}%
         {budget.spentOtherCurrencies.length > 0
-          ? ` · Also spent outside ${budget.currency}: ${budget.spentOtherCurrencies
+          ? ` · Ещё потрачено не в ${budget.currency}: ${budget.spentOtherCurrencies
               .map((entry) => displayMoney(entry.amount, entry.currency))
-              .join(", ")} (not counted toward this limit — FX not implemented)`
+              .join(", ")} (в этот лимит не входит — конвертации валют пока нет)`
           : ""}
       </p>
     </div>

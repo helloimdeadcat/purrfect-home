@@ -33,12 +33,12 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Update failed");
+        setError(data.error ?? "Не получилось обновить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -47,7 +47,7 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
   async function onDelete() {
     if (
       !window.confirm(
-        `Delete goal “${goal.name}”? This also removes its operation history.`,
+        `Удалить цель «${goal.name}»? Вся история операций по ней тоже удалится.`,
       )
     ) {
       return;
@@ -60,12 +60,12 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Delete failed");
+        setError(data.error ?? "Не получилось удалить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -88,7 +88,7 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
               variant={panel === "deposit" ? "default" : "outline"}
               onClick={() => setPanel(panel === "deposit" ? null : "deposit")}
             >
-              Add funds
+              Пополнить
             </Button>
             <Button
               type="button"
@@ -96,7 +96,7 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
               variant={panel === "withdraw" ? "default" : "outline"}
               onClick={() => setPanel(panel === "withdraw" ? null : "withdraw")}
             >
-              Withdraw
+              Снять
             </Button>
             <Button
               type="button"
@@ -104,7 +104,7 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
               variant={panel === "adjust" ? "default" : "outline"}
               onClick={() => setPanel(panel === "adjust" ? null : "adjust")}
             >
-              Adjust
+              Скорректировать
             </Button>
             <Button
               type="button"
@@ -112,7 +112,7 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
               variant={panel === "edit" ? "default" : "outline"}
               onClick={() => setPanel(panel === "edit" ? null : "edit")}
             >
-              Edit
+              Изменить
             </Button>
             <Button
               type="button"
@@ -121,7 +121,7 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
               disabled={pending}
               onClick={() => void patch({ isArchived: true })}
             >
-              Archive
+              В архив
             </Button>
           </>
         ) : (
@@ -132,7 +132,7 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
             disabled={pending}
             onClick={() => void patch({ isArchived: false })}
           >
-            Restore
+            Восстановить
           </Button>
         )}
         {canDelete ? (
@@ -143,7 +143,7 @@ export function GoalActions({ goal, canManage, canDelete }: Props) {
             disabled={pending}
             onClick={() => void onDelete()}
           >
-            Delete
+            Удалить
           </Button>
         ) : null}
       </div>

@@ -5,14 +5,14 @@ import { normalizeMoneyInput } from "@/lib/calculations/money";
 const moneyPositiveSchema = z
   .string()
   .trim()
-  .min(1, "Amount is required")
+  .min(1, "Укажи сумму")
   .transform((value, ctx) => {
     try {
       const normalized = normalizeMoneyInput(value);
       if (normalized.startsWith("-") || normalized === "0.00") {
         ctx.addIssue({
           code: "custom",
-          message: "Amount must be greater than zero",
+          message: "Сумма должна быть больше нуля",
         });
         return z.NEVER;
       }
@@ -20,7 +20,7 @@ const moneyPositiveSchema = z
     } catch {
       ctx.addIssue({
         code: "custom",
-        message: "Enter a valid amount with up to 2 decimals",
+        message: "Введи корректную сумму (не больше 2 знаков после запятой)",
       });
       return z.NEVER;
     }
@@ -29,14 +29,14 @@ const moneyPositiveSchema = z
 const moneyNonNegativeSchema = z
   .string()
   .trim()
-  .min(1, "Amount is required")
+  .min(1, "Укажи сумму")
   .transform((value, ctx) => {
     try {
       const normalized = normalizeMoneyInput(value);
       if (normalized.startsWith("-")) {
         ctx.addIssue({
           code: "custom",
-          message: "Amount cannot be negative",
+          message: "Сумма не может быть отрицательной",
         });
         return z.NEVER;
       }
@@ -44,7 +44,7 @@ const moneyNonNegativeSchema = z
     } catch {
       ctx.addIssue({
         code: "custom",
-        message: "Enter a valid amount with up to 2 decimals",
+        message: "Введи корректную сумму (не больше 2 знаков после запятой)",
       });
       return z.NEVER;
     }
@@ -53,7 +53,7 @@ const moneyNonNegativeSchema = z
 const currencySchema = z
   .string()
   .trim()
-  .length(3, "Currency must be a 3-letter code")
+  .length(3, "Валюта — код из 3 букв")
   .toUpperCase();
 
 const optionalDateSchema = z
@@ -62,7 +62,7 @@ const optionalDateSchema = z
   .transform((value) => (value && value.length > 0 ? value : null));
 
 export const createGoalSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(120),
+  name: z.string().trim().min(1, "Укажи название").max(120),
   targetAmount: moneyPositiveSchema,
   currency: currencySchema.optional(),
   description: z
@@ -104,7 +104,7 @@ export const updateGoalSchema = z
       value.targetDate !== undefined ||
       value.isArchived !== undefined ||
       value.isCompleted !== undefined,
-    { message: "No changes provided" },
+    { message: "Нет изменений" },
   );
 
 export const goalOperationSchema = z.object({

@@ -35,7 +35,7 @@ export async function getOwnProfile(
     .maybeSingle();
 
   if (error) return { data: null, error: err("DB", error.message) };
-  if (!data) return { data: null, error: err("NOT_FOUND", "Profile not found") };
+  if (!data) return { data: null, error: err("NOT_FOUND", "Профиль не найден") };
   return { data, error: null };
 }
 
@@ -59,7 +59,7 @@ export async function updateOwnProfile(
     if (error || !data) {
       return {
         data: null,
-        error: err("DB", error?.message ?? "Failed to update profile"),
+        error: err("DB", error?.message ?? "Не получилось обновить профиль"),
       };
     }
 
@@ -105,7 +105,7 @@ export async function getHouseholdSettings(
   if (!data) {
     return {
       data: null,
-      error: err("NOT_FOUND", "Household settings not found"),
+      error: err("NOT_FOUND", "Настройки семьи не найдены"),
     };
   }
   return { data, error: null };
@@ -146,7 +146,7 @@ export async function updateHouseholdSettings(
       data: null,
       error: err(
         "FORBIDDEN",
-        "Only owners and admins can change household settings",
+        "Настройки семьи могут менять только владелец и админы",
       ),
     };
   }
@@ -160,7 +160,7 @@ export async function updateHouseholdSettings(
       .maybeSingle();
     if (error) return { data: null, error: err("DB", error.message) };
     if (!account) {
-      return { data: null, error: err("VALIDATION", "Default account not found") };
+      return { data: null, error: err("VALIDATION", "Счёт по умолчанию не найден") };
     }
   }
 
@@ -174,7 +174,7 @@ export async function updateHouseholdSettings(
     if (!category || category.household_id !== ctx.householdId) {
       return {
         data: null,
-        error: err("VALIDATION", "Default category not found"),
+        error: err("VALIDATION", "Категория по умолчанию не найдена"),
       };
     }
   }
@@ -206,7 +206,7 @@ export async function updateHouseholdSettings(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update settings"),
+      error: err("DB", error?.message ?? "Не получилось сохранить настройки"),
     };
   }
   return { data, error: null };

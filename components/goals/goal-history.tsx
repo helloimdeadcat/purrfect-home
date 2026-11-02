@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { displayMoney } from "@/lib/calculations/money";
+import { LOCALE } from "@/lib/locale";
 import type { GoalOperationRow } from "@/services/goal-service";
 
 type Props = {
@@ -12,11 +13,23 @@ type Props = {
 };
 
 const TYPE_LABEL: Record<GoalOperationRow["type"], string> = {
-  initial: "Starting balance",
-  deposit: "Deposit",
-  withdraw: "Withdraw",
-  adjust: "Adjustment",
+  initial: "Начальная сумма",
+  deposit: "Пополнение",
+  withdraw: "Снятие",
+  adjust: "Корректировка",
 };
+
+const dateFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+function formatDate(isoDate: string): string {
+  const date = new Date(`${isoDate.slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? isoDate : dateFormat.format(date);
+}
 
 export function GoalHistory({ goalId, currency }: Props) {
   const [open, setOpen] = useState(false);
@@ -39,12 +52,12 @@ export function GoalHistory({ goalId, currency }: Props) {
         };
         if (cancelled) return;
         if (!response.ok) {
-          setError(data.error ?? "Failed to load history");
+          setError(data.error ?? "Не получилось загрузить историю");
           return;
         }
         setOperations(data.operations ?? []);
       } catch {
-        if (!cancelled) setError("Network error");
+        if (!cancelled) setError("Ошибка сети");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -64,13 +77,13 @@ export function GoalHistory({ goalId, currency }: Props) {
         variant="ghost"
         onClick={() => setOpen((value) => !value)}
       >
-        {open ? "Hide history" : "Show history"}
+        {open ? "Скрыть историю" : "Показать историю"}
       </Button>
 
       {open ? (
         <div className="grid gap-2 rounded-lg border border-border p-3">
           {loading ? (
-            <p className="text-sm text-muted-foreground">Loading…</p>
+            <p className="text-sm text-muted-foreground">Загружаем…</p>
           ) : null}
           {error ? (
             <p className="text-sm text-destructive" role="alert">
@@ -78,7 +91,7 @@ export function GoalHistory({ goalId, currency }: Props) {
             </p>
           ) : null}
           {!loading && !error && operations?.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No operations yet.</p>
+            <p className="text-sm text-muted-foreground">Операций пока нет.</p>
           ) : null}
           {!loading &&
             operations?.map((op) => (
@@ -89,7 +102,7 @@ export function GoalHistory({ goalId, currency }: Props) {
                 <div className="min-w-0">
                   <p className="font-medium">{TYPE_LABEL[op.type]}</p>
                   <p className="text-muted-foreground">
-                    {op.operation_date}
+                    {formatDate(op.operation_date)}
                     {op.note ? ` · ${op.note}` : ""}
                   </p>
                 </div>
@@ -99,7 +112,7 @@ export function GoalHistory({ goalId, currency }: Props) {
                     {displayMoney(op.amount, currency)}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    bal {displayMoney(op.balance_after, currency)}
+                    итого {displayMoney(op.balance_after, currency)}
                   </p>
                 </div>
               </div>

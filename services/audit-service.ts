@@ -38,7 +38,7 @@ export async function listAuditLog(
   options?: { before?: string; limit?: number },
 ): Promise<{ data: AuditEntry[] | null; error: ServiceError | null }> {
   if (!canAdmin(ctx.role)) {
-    return { data: null, error: err("FORBIDDEN", "Only owners and admins can view the activity log") };
+    return { data: null, error: err("FORBIDDEN", "Историю могут смотреть только владелец и админы") };
   }
 
   let query = supabase
@@ -58,7 +58,7 @@ export async function listAuditLog(
   const nameByUser = new Map(
     (members.data ?? []).map((m) => [
       m.user_id,
-      m.display_name || m.email?.split("@")[0] || "Member",
+      m.display_name || m.email?.split("@")[0] || "Участник",
     ]),
   );
 
@@ -68,7 +68,7 @@ export async function listAuditLog(
       createdAt: row.created_at,
       action: row.action,
       entityType: row.entity_type,
-      actor: row.user_id ? (nameByUser.get(row.user_id) ?? "Former member") : "System",
+      actor: row.user_id ? (nameByUser.get(row.user_id) ?? "Бывший участник") : "Система",
       oldData: row.old_data,
       newData: row.new_data,
     })),

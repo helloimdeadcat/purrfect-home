@@ -51,20 +51,20 @@ export function resolveForecastHorizon(
       const from = options.from ?? today;
       const to = options.to;
       if (!to) {
-        throw new Error("Custom horizon requires to");
+        throw new Error("Для своего горизонта укажи конечную дату");
       }
       if (to < today) {
-        throw new Error("Horizon end must be on or after today");
+        throw new Error("Конец прогноза не может быть раньше сегодняшнего дня");
       }
       if (from > to) {
-        throw new Error("Horizon start must be on or before end");
+        throw new Error("Начало прогноза не может быть позже его конца");
       }
       // Forecast always starts at today for Safe-to-Spend / balance projection.
       const start = from < today ? today : from;
       // The projection itself runs from today, so cap the span from today —
       // a late `from` must not smuggle in a longer horizon.
       if (daysInclusive(today, to) > MAX_HORIZON_DAYS) {
-        throw new Error(`Horizon cannot exceed ${MAX_HORIZON_DAYS} days`);
+        throw new Error(`Прогноз не может быть длиннее ${MAX_HORIZON_DAYS} дней`);
       }
       return { start, end: to };
     }

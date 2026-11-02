@@ -45,13 +45,13 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to create tag");
+        setError(data.error ?? "Не получилось создать метку");
         return;
       }
       formEl.reset();
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -68,13 +68,13 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Rename failed");
+        setError(data.error ?? "Не получилось переименовать");
         return;
       }
       setEditingId(null);
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -82,19 +82,19 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
 
   async function remove(id: string, name: string) {
     if (!canRemove) return;
-    if (!window.confirm(`Remove or archive “${name}”?`)) return;
+    if (!window.confirm(`Удалить или архивировать «${name}»?`)) return;
     setError(null);
     setPending(true);
     try {
       const response = await fetch(`/api/tags/${id}`, { method: "DELETE" });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Remove failed");
+        setError(data.error ?? "Не получилось удалить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -111,12 +111,12 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Restore failed");
+        setError(data.error ?? "Не получилось восстановить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -125,14 +125,14 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
   return (
     <section className="grid gap-3 card-soft p-4">
       <div>
-        <h2 className="font-medium">Tags</h2>
+        <h2 className="font-medium">Метки</h2>
         <p className="text-sm text-muted-foreground">
-          Tags stay linked to past transactions when archived.
+          Метки в архиве остаются у прошлых операций.
         </p>
       </div>
 
       {tags.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No tags yet.</p>
+        <p className="text-sm text-muted-foreground">Меток пока нет.</p>
       ) : (
         <ul className="grid gap-2">
           {tags.map((tag) => (
@@ -154,7 +154,7 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
                     disabled={pending}
                     onClick={() => void saveRename(tag.id)}
                   >
-                    Save
+                    Сохранить
                   </Button>
                   <Button
                     type="button"
@@ -162,14 +162,14 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
                     variant="ghost"
                     onClick={() => setEditingId(null)}
                   >
-                    Cancel
+                    Отмена
                   </Button>
                 </div>
               ) : (
                 <div>
                   <p className="font-medium">{tag.name}</p>
                   <p className="text-xs text-muted-foreground">
-                    {tag.is_active ? "active" : "archived"}
+                    {tag.is_active ? "активна" : "в архиве"}
                   </p>
                 </div>
               )}
@@ -187,7 +187,7 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
                           setEditName(tag.name);
                         }}
                       >
-                        Rename
+                        Переименовать
                       </Button>
                       {canRemove ? (
                         <Button
@@ -197,7 +197,7 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
                           disabled={pending}
                           onClick={() => void remove(tag.id, tag.name)}
                         >
-                          Archive / delete
+                          В архив / удалить
                         </Button>
                       ) : null}
                     </>
@@ -209,7 +209,7 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
                       disabled={pending}
                       onClick={() => void restore(tag.id)}
                     >
-                      Restore
+                      Восстановить
                     </Button>
                   )}
                 </div>
@@ -221,19 +221,19 @@ export function TagsSettings({ tags, canManage, canRemove }: Props) {
 
       {canManage ? (
         <form onSubmit={onCreate} className="grid gap-3 border-t border-border pt-3">
-          <p className="text-sm font-medium">New tag</p>
+          <p className="text-sm font-medium">Новая метка</p>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-2">
-              <Label htmlFor="tag-name">Name</Label>
+              <Label htmlFor="tag-name">Название</Label>
               <Input id="tag-name" name="name" required maxLength={40} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="tag-color">Color</Label>
+              <Label htmlFor="tag-color">Цвет</Label>
               <Input id="tag-color" name="color" placeholder="#E8679A" />
             </div>
           </div>
           <Button type="submit" size="sm" disabled={pending}>
-            {pending ? "Saving…" : "Add tag"}
+            {pending ? "Сохраняем…" : "Добавить метку"}
           </Button>
         </form>
       ) : null}

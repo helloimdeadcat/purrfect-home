@@ -34,23 +34,26 @@ function chunk(type, data) {
   return Buffer.concat([length, body, crc]);
 }
 
-function encodePng(size, pixel) {
-  const raw = Buffer.alloc((size * 3 + 1) * size);
+/** `channels` 3 = RGB, 4 = RGBA. `pixel` returns [r,g,b] or [r,g,b,a]. */
+function encodePng(size, pixel, channels = 3) {
+  const stride = size * channels + 1;
+  const raw = Buffer.alloc(stride * size);
   for (let y = 0; y < size; y += 1) {
-    raw[y * (size * 3 + 1)] = 0; // filter: none
+    raw[y * stride] = 0; // filter: none
     for (let x = 0; x < size; x += 1) {
-      const [r, g, b] = pixel(x, y);
-      const offset = y * (size * 3 + 1) + 1 + x * 3;
-      raw[offset] = r;
-      raw[offset + 1] = g;
-      raw[offset + 2] = b;
+      const rgba = pixel(x, y);
+      const offset = y * stride + 1 + x * channels;
+      raw[offset] = rgba[0];
+      raw[offset + 1] = rgba[1];
+      raw[offset + 2] = rgba[2];
+      if (channels === 4) raw[offset + 3] = rgba[3] ?? 255;
     }
   }
   const header = Buffer.alloc(13);
   header.writeUInt32BE(size, 0);
   header.writeUInt32BE(size, 4);
   header[8] = 8; // bit depth
-  header[9] = 2; // colour type: RGB
+  header[9] = channels === 4 ? 6 : 2; // RGBA or RGB
   return Buffer.concat([
     Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     chunk("IHDR", header),
@@ -122,6 +125,36 @@ function catIcon(size, glyphScale) {
   });
 }
 
+/**
+ * Android notification badge: white silhouette on transparent. Colour PNGs
+ * are ignored / show as a white square — alpha mask only.
+ */
+function catBadge(size, glyphScale) {
+  const SAMPLES = 4;
+  const half = (size * glyphScale) / 2;
+  const cx = size / 2;
+  const cy = size / 2 + half * 0.08;
+
+  return encodePng(
+    size,
+    (x, y) => {
+      let covered = 0;
+      for (let sy = 0; sy < SAMPLES; sy += 1) {
+        for (let sx = 0; sx < SAMPLES; sx += 1) {
+          const u = (x + (sx + 0.5) / SAMPLES - cx) / half;
+          const v = (y + (sy + 0.5) / SAMPLES - cy) / half;
+          const onEar = inTriangle(u, v, EAR) || inTriangle(u, v, mirror(EAR));
+          const onHead = (u / 1) ** 2 + ((v - 0.05) / 0.86) ** 2 <= 1;
+          if (onEar || onHead) covered += 1;
+        }
+      }
+      const alpha = Math.round((255 * covered) / (SAMPLES * SAMPLES));
+      return [255, 255, 255, alpha];
+    },
+    4,
+  );
+}
+
 const out = path.join(import.meta.dirname, "..", "public");
 const icons = [
   ["icon-192.png", 192, 0.6],
@@ -133,3 +166,6 @@ for (const [name, size, scale] of icons) {
   writeFileSync(path.join(out, name), catIcon(size, scale));
   console.log("wrote", name);
 }
+writeFileSync(path.join(out, "badge-96.png"), catBadge(96, 0.72));
+console.log("wrote", "badge-96.png");
+

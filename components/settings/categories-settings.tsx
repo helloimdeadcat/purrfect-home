@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const TYPE_LABELS: Record<Category["type"], string> = {
+  expense: "Расход",
+  income: "Доход",
+  both: "Доход и расход",
+};
+
 type Category = {
   id: string;
   name: string;
@@ -50,14 +56,14 @@ export function CategoriesSettings({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to create category");
+        setError(data.error ?? "Не получилось создать категорию");
         return;
       }
       formEl.reset();
       setType("expense");
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -74,12 +80,12 @@ export function CategoriesSettings({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Update failed");
+        setError(data.error ?? "Не получилось сохранить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -87,7 +93,7 @@ export function CategoriesSettings({
 
   async function remove(id: string, name: string) {
     if (!canRemove) return;
-    if (!window.confirm(`Remove or archive “${name}”?`)) return;
+    if (!window.confirm(`Удалить или архивировать «${name}»?`)) return;
     setError(null);
     setPending(true);
     try {
@@ -97,12 +103,12 @@ export function CategoriesSettings({
         archived?: boolean;
       };
       if (!response.ok) {
-        setError(data.error ?? "Remove failed");
+        setError(data.error ?? "Не получилось удалить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -111,15 +117,15 @@ export function CategoriesSettings({
   return (
     <section className="grid gap-3 card-soft p-4">
       <div>
-        <h2 className="font-medium">Categories</h2>
+        <h2 className="font-medium">Категории</h2>
         <p className="text-sm text-muted-foreground">
-          Used categories are archived instead of deleted so history stays
-          intact.
+          Категории, которые уже где-то используются, не удаляются, а уходят в
+          архив — так история остаётся целой.
         </p>
       </div>
 
       {categories.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No categories yet.</p>
+        <p className="text-sm text-muted-foreground">Категорий пока нет.</p>
       ) : (
         <ul className="grid gap-2">
           {categories.map((category) => (
@@ -129,9 +135,9 @@ export function CategoriesSettings({
             >
               <div>
                 <p className="font-medium">{category.name}</p>
-                <p className="text-xs capitalize text-muted-foreground">
-                  {category.type}
-                  {category.is_active ? "" : " · archived"}
+                <p className="text-xs text-muted-foreground">
+                  {TYPE_LABELS[category.type] ?? category.type}
+                  {category.is_active ? "" : " · в архиве"}
                 </p>
               </div>
               {canManage ? (
@@ -144,7 +150,7 @@ export function CategoriesSettings({
                       disabled={pending}
                       onClick={() => void patch(category.id, { isActive: true })}
                     >
-                      Restore
+                      Восстановить
                     </Button>
                   ) : canRemove ? (
                     <Button
@@ -154,7 +160,7 @@ export function CategoriesSettings({
                       disabled={pending}
                       onClick={() => void remove(category.id, category.name)}
                     >
-                      Archive / delete
+                      В архив / удалить
                     </Button>
                   ) : null}
                 </div>
@@ -166,14 +172,14 @@ export function CategoriesSettings({
 
       {canManage ? (
         <form onSubmit={onCreate} className="grid gap-3 border-t border-border pt-3">
-          <p className="text-sm font-medium">New category</p>
+          <p className="text-sm font-medium">Новая категория</p>
           <div className="grid gap-3 sm:grid-cols-3">
             <div className="grid gap-2 sm:col-span-1">
-              <Label htmlFor="cat-name">Name</Label>
+              <Label htmlFor="cat-name">Название</Label>
               <Input id="cat-name" name="name" required maxLength={80} />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="cat-type">Type</Label>
+              <Label htmlFor="cat-type">Тип</Label>
               <select
                 id="cat-type"
                 className="h-8 rounded-lg border border-input bg-transparent px-2.5 text-sm"
@@ -182,18 +188,18 @@ export function CategoriesSettings({
                   setType(event.target.value as typeof type)
                 }
               >
-                <option value="expense">Expense</option>
-                <option value="income">Income</option>
-                <option value="both">Both</option>
+                <option value="expense">Расход</option>
+                <option value="income">Доход</option>
+                <option value="both">Доход и расход</option>
               </select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="cat-color">Color</Label>
+              <Label htmlFor="cat-color">Цвет</Label>
               <Input id="cat-color" name="color" placeholder="#7FCBB0" />
             </div>
           </div>
           <Button type="submit" size="sm" disabled={pending}>
-            {pending ? "Saving…" : "Add category"}
+            {pending ? "Сохраняем…" : "Добавить категорию"}
           </Button>
         </form>
       ) : null}

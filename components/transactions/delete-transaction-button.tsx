@@ -35,7 +35,7 @@ export function DeleteTransactionButton({ transactionId }: Props) {
       disabled={pending}
       onClick={onDelete}
     >
-      {pending ? "…" : "Delete"}
+      {pending ? "…" : "Удалить"}
     </Button>
   );
 }

@@ -23,14 +23,14 @@ export function MonthSwitcher({ year, month }: Props) {
         href={`/app/budgets?month=${formatYearMonth(prev.year, prev.month)}`}
         className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
       >
-        Previous
+        ← Назад
       </Link>
       <p className="text-center font-medium">{monthLabel(year, month)}</p>
       <Link
         href={`/app/budgets?month=${formatYearMonth(next.year, next.month)}`}
         className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
       >
-        Next
+        Вперёд →
       </Link>
     </div>
   );

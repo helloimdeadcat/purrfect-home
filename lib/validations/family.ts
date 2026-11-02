@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const updateHouseholdSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(120),
+  name: z.string().trim().min(1, "Укажи название").max(120),
 });
 
 export const createInvitationSchema = z.object({
@@ -9,13 +9,13 @@ export const createInvitationSchema = z.object({
     .string()
     .trim()
     .toLowerCase()
-    .pipe(z.email("Enter a valid email")),
+    .pipe(z.email("Введи корректную почту")),
   // Role is fixed server-side to member; reject attempts to elevate via client
   role: z.literal("member").optional().default("member"),
 });
 
 export const acceptInvitationSchema = z.object({
-  token: z.string().trim().min(20, "Invalid invitation"),
+  token: z.string().trim().min(20, "Приглашение недействительно"),
 });
 
 export type UpdateHouseholdInput = z.infer<typeof updateHouseholdSchema>;

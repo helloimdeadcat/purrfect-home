@@ -50,7 +50,7 @@ export function ScheduleItem({
         checked={done}
         disabled={!canEdit}
         onChange={() => void toggle()}
-        aria-label={`Mark "${item.title}" as ${done ? "not done" : "done"}`}
+        aria-label={`${done ? "Снять отметку с" : "Отметить готовым"} «${item.title}»`}
         className="mt-0.5 size-4 shrink-0 accent-[var(--primary)]"
       />
       <div className="min-w-0">

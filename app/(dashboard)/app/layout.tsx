@@ -9,21 +9,21 @@ import { getSessionUser } from "@/lib/auth/session";
 import { countUnreadNotifications } from "@/services/notification-service";
 
 const navItems = [
-  { href: "/app/dashboard", label: "Dashboard" },
-  { href: "/app/tasks", label: "To-do" },
-  { href: "/app/schedule", label: "Schedule" },
-  { href: "/app/habits", label: "Habits" },
-  { href: "/app/meals", label: "Meals" },
-  { href: "/app/assistant", label: "Assistant ✨" },
-  { href: "/app/transactions", label: "Transactions" },
-  { href: "/app/accounts", label: "Accounts" },
-  { href: "/app/family", label: "Family" },
-  { href: "/app/budgets", label: "Budgets" },
-  { href: "/app/goals", label: "Goals" },
-  { href: "/app/recurring", label: "Recurring" },
-  { href: "/app/calendar", label: "Calendar" },
-  { href: "/app/analytics", label: "Analytics" },
-  { href: "/app/settings", label: "Settings" },
+  { href: "/app/dashboard", label: "Главная" },
+  { href: "/app/tasks", label: "Дела" },
+  { href: "/app/schedule", label: "Расписание" },
+  { href: "/app/habits", label: "Привычки" },
+  { href: "/app/meals", label: "Питание" },
+  { href: "/app/assistant", label: "Морти ✨" },
+  { href: "/app/transactions", label: "Операции" },
+  { href: "/app/accounts", label: "Счета" },
+  { href: "/app/family", label: "Семья" },
+  { href: "/app/budgets", label: "Бюджеты" },
+  { href: "/app/goals", label: "Цели" },
+  { href: "/app/recurring", label: "Регулярные платежи" },
+  { href: "/app/calendar", label: "Календарь" },
+  { href: "/app/analytics", label: "Аналитика" },
+  { href: "/app/settings", label: "Настройки" },
 ] as const;
 
 export default async function AppLayout({
@@ -42,7 +42,7 @@ export default async function AppLayout({
   const items = [
     ...navItems,
     ...(ctx && canAdmin(ctx.role)
-      ? [{ href: "/app/activity", label: "Activity" } as const]
+      ? [{ href: "/app/activity", label: "История" } as const]
       : []),
   ];
 
@@ -66,9 +66,9 @@ export default async function AppLayout({
               href="/app/notifications"
               className="relative grid size-9 place-items-center rounded-full text-primary transition-colors hover:bg-secondary"
               aria-label={
-                unread > 0 ? `Notifications, ${unread} unread` : "Notifications"
+                unread > 0 ? `Уведомления, непрочитанных: ${unread}` : "Уведомления"
               }
-              title="Notifications"
+              title="Уведомления"
             >
               <Heart className="size-5" />
               {unread > 0 ? (

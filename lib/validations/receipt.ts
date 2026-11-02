@@ -63,7 +63,7 @@ export function sniffReceiptKind(bytes: Uint8Array): ReceiptKind | null {
 export function sanitizeReceiptFileName(name: string | null | undefined): string {
   const base = (name ?? "").split(/[/\\]/).pop() ?? "";
   const cleaned = base.replace(/[\u0000-\u001f\u007f]/g, "").trim();
-  if (!cleaned) return "receipt";
+  if (!cleaned) return "чек";
   return cleaned.length > 120 ? cleaned.slice(0, 120) : cleaned;
 }
 
@@ -73,16 +73,16 @@ export type ReceiptCheck =
 
 export function validateReceiptBytes(bytes: Uint8Array): ReceiptCheck {
   if (bytes.length === 0) {
-    return { ok: false, message: "File is empty" };
+    return { ok: false, message: "Файл пустой" };
   }
   if (bytes.length > MAX_RECEIPT_BYTES) {
-    return { ok: false, message: "File is larger than 8 MB" };
+    return { ok: false, message: "Файл больше 8 МБ" };
   }
   const kind = sniffReceiptKind(bytes);
   if (!kind) {
     return {
       ok: false,
-      message: "Unsupported file type — use JPEG, PNG, WebP, HEIC or PDF",
+      message: "Неподдерживаемый формат — подойдут JPEG, PNG, WebP, HEIC или PDF",
     };
   }
   return { ok: true, kind, size: bytes.length };

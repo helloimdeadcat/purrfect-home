@@ -5,19 +5,19 @@ import { normalizeMoneyInput } from "@/lib/calculations/money";
 const moneyNonNegativeSchema = z
   .string()
   .trim()
-  .min(1, "Amount is required")
+  .min(1, "Укажи сумму")
   .transform((value, ctx) => {
     try {
       const normalized = normalizeMoneyInput(value);
       if (normalized.startsWith("-")) {
-        ctx.addIssue({ code: "custom", message: "Amount cannot be negative" });
+        ctx.addIssue({ code: "custom", message: "Сумма не может быть отрицательной" });
         return z.NEVER;
       }
       return normalized;
     } catch {
       ctx.addIssue({
         code: "custom",
-        message: "Enter a valid amount with up to 2 decimals",
+        message: "Введи сумму, максимум 2 знака после запятой",
       });
       return z.NEVER;
     }
@@ -60,10 +60,10 @@ export const updateProfileSchema = z.object({
 /** Per-currency Safe-to-Spend reserve; zero entries are dropped. */
 const reserveMapSchema = z
   .record(
-    z.string().trim().regex(/^[A-Za-z]{3}$/, "Use a 3-letter currency code").toUpperCase(),
+    z.string().trim().regex(/^[A-Za-z]{3}$/, "Используй код валюты из 3 букв").toUpperCase(),
     moneyNonNegativeSchema,
   )
-  .refine((value) => Object.keys(value).length <= 20, "Too many currencies")
+  .refine((value) => Object.keys(value).length <= 20, "Слишком много валют")
   .transform((value) =>
     Object.fromEntries(Object.entries(value).filter(([, amount]) => amount !== "0.00")),
   );
@@ -79,11 +79,11 @@ export const updateHouseholdSettingsSchema = z
   })
   .refine(
     (value) => Object.values(value).some((entry) => entry !== undefined),
-    { message: "No changes provided" },
+    { message: "Нет изменений" },
   );
 
 export const createCategorySchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(80),
+  name: z.string().trim().min(1, "Укажи название").max(80),
   type: z.enum(["expense", "income", "both"]),
   color: optionalColorSchema,
   icon: z
@@ -109,11 +109,11 @@ export const updateCategorySchema = z
   })
   .refine(
     (value) => Object.values(value).some((entry) => entry !== undefined),
-    { message: "No changes provided" },
+    { message: "Нет изменений" },
   );
 
 export const createTagSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(40),
+  name: z.string().trim().min(1, "Укажи название").max(40),
   color: optionalColorSchema,
 });
 
@@ -125,15 +125,15 @@ export const updateTagSchema = z
   })
   .refine(
     (value) => Object.values(value).some((entry) => entry !== undefined),
-    { message: "No changes provided" },
+    { message: "Нет изменений" },
   );
 
 export const createIncomeSourceSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(120),
+  name: z.string().trim().min(1, "Укажи название").max(120),
   amount: moneyNonNegativeSchema,
   currency: z.string().trim().length(3).toUpperCase().optional(),
   frequency: z.enum(["daily", "weekly", "monthly", "yearly", "custom"]),
-  nextDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD"),
+  nextDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД"),
   accountId: z.uuid(),
   memberId: z.uuid().optional(),
 });
@@ -148,7 +148,7 @@ export const updateIncomeSourceSchema = z
       .optional(),
     nextDate: z
       .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД")
       .optional(),
     accountId: z.uuid().optional(),
     memberId: z.uuid().optional(),
@@ -156,7 +156,7 @@ export const updateIncomeSourceSchema = z
   })
   .refine(
     (value) => Object.values(value).some((entry) => entry !== undefined),
-    { message: "No changes provided" },
+    { message: "Нет изменений" },
   );
 
 export type UpdateProfileInput = {

@@ -46,13 +46,13 @@ export function ProfileSettingsForm({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to save profile");
+        setError(data.error ?? "Не получилось сохранить профиль");
         return;
       }
-      setSuccess("Profile saved");
+      setSuccess("Профиль сохранён 🐾");
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -64,12 +64,12 @@ export function ProfileSettingsForm({
       className="grid gap-3 card-soft p-4"
     >
       <div>
-        <h2 className="font-medium">Profile</h2>
+        <h2 className="font-medium">Профиль</h2>
         <p className="text-sm text-muted-foreground">{email}</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="firstName">First name</Label>
+          <Label htmlFor="firstName">Имя</Label>
           <Input
             id="firstName"
             name="firstName"
@@ -78,7 +78,7 @@ export function ProfileSettingsForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="lastName">Last name</Label>
+          <Label htmlFor="lastName">Фамилия</Label>
           <Input
             id="lastName"
             name="lastName"
@@ -87,7 +87,7 @@ export function ProfileSettingsForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="displayName">Display name in family</Label>
+          <Label htmlFor="displayName">Как тебя называть в семье</Label>
           <Input
             id="displayName"
             name="displayName"
@@ -96,7 +96,7 @@ export function ProfileSettingsForm({
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="currency">Preferred currency</Label>
+          <Label htmlFor="currency">Любимая валюта</Label>
           <Input
             id="currency"
             name="currency"
@@ -105,7 +105,7 @@ export function ProfileSettingsForm({
             required
           />
           <p className="text-xs text-muted-foreground">
-            Personal preference only — does not convert household balances.
+            Только личная настройка — балансы семьи не пересчитываются.
           </p>
         </div>
       </div>
@@ -116,7 +116,7 @@ export function ProfileSettingsForm({
       ) : null}
       {success ? <p className="text-sm text-muted-foreground">{success}</p> : null}
       <Button type="submit" disabled={pending}>
-        {pending ? "Saving…" : "Save profile"}
+        {pending ? "Сохраняем…" : "Сохранить профиль"}
       </Button>
     </form>
   );

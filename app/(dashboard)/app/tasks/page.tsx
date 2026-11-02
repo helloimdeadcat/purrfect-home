@@ -37,7 +37,7 @@ function Section({
       <h2 className="flex items-baseline gap-2 font-medium">
         {title}
         <span className="text-sm font-normal text-muted-foreground">
-          {open === 0 ? "all done ♥" : `${open} open`}
+          {open === 0 ? "всё готово ♥" : `осталось ${open}`}
         </span>
       </h2>
       <ul className="grid gap-2">
@@ -78,7 +78,7 @@ export default async function TasksPage({ searchParams }: Props) {
   if (!view) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold">To-do</h1>
+        <h1 className="text-2xl font-semibold">Дела</h1>
         <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
@@ -109,25 +109,25 @@ export default async function TasksPage({ searchParams }: Props) {
   const nothing = Object.values(sections).every((list) => list.length === 0);
 
   const filters = [
-    { key: "all", label: "Everyone", color: "var(--muted-foreground)" },
+    { key: "all", label: "Все", color: "var(--muted-foreground)" },
     ...view.personOptions.map((p) => ({ key: p.memberId ?? "together", label: p.label, color: p.color })),
   ];
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">To-do</h1>
+        <h1 className="text-2xl font-semibold">Дела</h1>
         <p className="text-muted-foreground">
-          Shared chores and errands — who does what, and when. Items with a
-          time also appear in the{" "}
+          Общие дела и поручения — кто что делает и когда. Дела со временем
+          появляются и в{" "}
           <Link href="/app/schedule" className="underline underline-offset-4">
-            schedule
+            расписании
           </Link>
           .
         </p>
       </div>
 
-      <nav aria-label="Filter by person" className="flex flex-wrap gap-1.5">
+      <nav aria-label="Фильтр по человеку" className="flex flex-wrap gap-1.5">
         {filters.map((f) => (
           <Link
             key={f.key}
@@ -146,7 +146,7 @@ export default async function TasksPage({ searchParams }: Props) {
 
       {view.canEdit ? (
         <details className="card-soft p-4" open={nothing}>
-          <summary className="cursor-pointer font-medium">＋ New to-do</summary>
+          <summary className="cursor-pointer font-medium">＋ Новое дело</summary>
           <div className="mt-3">
             <TaskForm
               people={view.personOptions}
@@ -164,18 +164,18 @@ export default async function TasksPage({ searchParams }: Props) {
       ) : null}
 
       {nothing ? (
-        <EmptyState title="Nothing to do — enjoy!">
-          Add chores, errands or plans above. Repeat them daily, on certain
-          weekdays or monthly.
+        <EmptyState title="Дел нет — отдыхай! 🐾">
+          Добавь дела, поручения или планы выше. Их можно повторять каждый
+          день, по определённым дням недели или раз в месяц.
         </EmptyState>
       ) : (
         <>
-          <Section title="Overdue" items={sections.overdue} view={view} showDate />
-          <Section title="Today" items={sections.today} view={view} />
-          <Section title="Tomorrow" items={sections.tomorrow} view={view} />
-          <Section title="This week" items={sections.thisWeek} view={view} showDate />
-          <Section title="Next week" items={sections.later} view={view} showDate />
-          <Section title="Someday" items={sections.someday} view={view} />
+          <Section title="Просрочено" items={sections.overdue} view={view} showDate />
+          <Section title="Сегодня" items={sections.today} view={view} />
+          <Section title="Завтра" items={sections.tomorrow} view={view} />
+          <Section title="На этой неделе" items={sections.thisWeek} view={view} showDate />
+          <Section title="На следующей неделе" items={sections.later} view={view} showDate />
+          <Section title="Когда-нибудь" items={sections.someday} view={view} />
         </>
       )}
     </div>

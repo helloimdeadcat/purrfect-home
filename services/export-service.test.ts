@@ -79,10 +79,10 @@ describe("exportTransactionsCsv", () => {
     );
     const lines = data!.replace(/^﻿/, "").trimEnd().split("\r\n");
     expect(lines[0]).toBe(
-      "date,type,adjustment_direction,amount,currency,account,category,income_source,tags,merchant,description,notes",
+      "Дата,Тип,Направление корректировки,Сумма,Валюта,Счёт,Категория,Источник дохода,Метки,Магазин,Описание,Заметки",
     );
     expect(lines[1]).toBe(
-      `2026-10-02,expense,,12.50,EUR,Giro,Food,,work,"'=HYPERLINK(""http://evil"")","Lunch, team",`,
+      `2026-10-02,Расход,,12.50,EUR,Giro,Food,,work,"'=HYPERLINK(""http://evil"")","Lunch, team",`,
     );
   });
 });

@@ -76,14 +76,14 @@ export function HabitForm({
         const fieldMessage = data.details?.fieldErrors
           ? Object.values(data.details.fieldErrors).flat()[0]
           : null;
-        setError(fieldMessage ?? data.error ?? "Could not save");
+        setError(fieldMessage ?? data.error ?? "Не получилось сохранить");
         return;
       }
       if (!habit) formEl.reset();
       router.refresh();
       onDone?.();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети — проверь подключение");
     } finally {
       setPending(false);
     }
@@ -93,18 +93,18 @@ export function HabitForm({
     <form onSubmit={onSubmit} className="grid gap-3">
       <div className="grid grid-cols-[4.5rem_1fr] gap-3">
         <div className="grid gap-1.5">
-          <Label htmlFor={`emoji-${id}`}>Icon</Label>
+          <Label htmlFor={`emoji-${id}`}>Значок</Label>
           <Input id={`emoji-${id}`} name="emoji" maxLength={8} defaultValue={habit?.emoji ?? ""} placeholder="💧" className="text-center" />
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor={`habit-${id}`}>Habit</Label>
-          <Input id={`habit-${id}`} name="title" required maxLength={120} defaultValue={habit?.title} placeholder="Drink water, walk, read…" />
+          <Label htmlFor={`habit-${id}`}>Привычка</Label>
+          <Input id={`habit-${id}`} name="title" required maxLength={120} defaultValue={habit?.title} placeholder="Пить воду, гулять, читать…" />
         </div>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <Label htmlFor={`owner-${id}`}>For</Label>
+          <Label htmlFor={`owner-${id}`}>Для кого</Label>
           <select
             id={`owner-${id}`}
             name="owner"
@@ -119,15 +119,15 @@ export function HabitForm({
           </select>
         </div>
         <div className="grid gap-1.5">
-          <Label htmlFor={`goal-${id}`}>Goal</Label>
+          <Label htmlFor={`goal-${id}`}>Цель</Label>
           <select
             id={`goal-${id}`}
             value={goalKind}
             onChange={(e) => setGoalKind(e.target.value as "check" | "count")}
             className={SELECT_CLASS}
           >
-            <option value="check">Just do it (tick)</option>
-            <option value="count">Reach an amount</option>
+            <option value="check">Просто сделать (галочка)</option>
+            <option value="count">Набрать количество</option>
           </select>
         </div>
       </div>
@@ -135,7 +135,7 @@ export function HabitForm({
       {goalKind === "count" ? (
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
-            <Label htmlFor={`target-${id}`}>Daily target</Label>
+            <Label htmlFor={`target-${id}`}>Цель на день</Label>
             <Input
               id={`target-${id}`}
               name="target"
@@ -146,28 +146,28 @@ export function HabitForm({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor={`unit-${id}`}>Unit</Label>
-            <Input id={`unit-${id}`} name="unit" maxLength={20} defaultValue={habit?.unit ?? ""} placeholder="L, glasses, steps" />
+            <Label htmlFor={`unit-${id}`}>Единица</Label>
+            <Input id={`unit-${id}`} name="unit" maxLength={20} defaultValue={habit?.unit ?? ""} placeholder="л, стаканы, шаги" />
           </div>
         </div>
       ) : null}
 
       <div className="grid gap-1.5 sm:w-1/2">
-        <Label htmlFor={`freq-${id}`}>How often</Label>
+        <Label htmlFor={`freq-${id}`}>Как часто</Label>
         <select
           id={`freq-${id}`}
           value={frequency}
           onChange={(e) => setFrequency(e.target.value as typeof frequency)}
           className={SELECT_CLASS}
         >
-          <option value="daily">Every day</option>
-          <option value="days">On certain days</option>
-          <option value="per_week">A number of times a week</option>
+          <option value="daily">Каждый день</option>
+          <option value="days">В определённые дни</option>
+          <option value="per_week">Несколько раз в неделю</option>
         </select>
       </div>
 
       {frequency === "days" ? (
-        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Days">
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label="Дни">
           {WEEKDAY_SHORT.map((label, index) => {
             const day = index + 1;
             const on = weekdays.includes(day);
@@ -201,9 +201,9 @@ export function HabitForm({
             max={7}
             defaultValue={habit?.times_per_week ?? 3}
             className="w-20"
-            aria-label="Times per week"
+            aria-label="Раз в неделю"
           />
-          <span className="text-sm text-muted-foreground">times a week, any days</span>
+          <span className="text-sm text-muted-foreground">раз в неделю, в любые дни</span>
         </div>
       ) : null}
 
@@ -214,11 +214,11 @@ export function HabitForm({
       ) : null}
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : habit ? "Save" : "Add habit"}
+          {pending ? "Сохраняю…" : habit ? "Сохранить" : "Добавить привычку"}
         </Button>
         {habit && onDone ? (
           <Button type="button" variant="ghost" onClick={onDone}>
-            Cancel
+            Отмена
           </Button>
         ) : null}
       </div>

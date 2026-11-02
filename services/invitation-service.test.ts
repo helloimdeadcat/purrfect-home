@@ -128,7 +128,7 @@ describe("createInvitation authorization", () => {
       "http://localhost:3000",
     );
     expect(error?.code).toBe("CONFLICT");
-    expect(error?.message).toMatch(/pending invitation already exists/i);
+    expect(error?.message).toMatch(/уже есть активное приглашение/i);
   });
 
   it("maps unique constraint violations to CONFLICT", async () => {

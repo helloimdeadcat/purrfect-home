@@ -27,7 +27,7 @@ export async function GET(request: Request) {
       input,
     );
     if (error || !data) {
-      return fromServiceError(error ?? { code: "DB", message: "Export failed" });
+      return fromServiceError(error ?? { code: "DB", message: "Не получилось выгрузить" });
     }
 
     return csvResponse(

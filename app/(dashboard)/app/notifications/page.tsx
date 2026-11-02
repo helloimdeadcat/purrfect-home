@@ -6,10 +6,11 @@ import { getHouseholdContext } from "@/lib/auth/household";
 import { getSessionUser } from "@/lib/auth/session";
 import { listNotifications } from "@/services/notification-service";
 import { EmptyState } from "@/components/cute/empty-state";
+import { LOCALE } from "@/lib/locale";
 import { Heart } from "@/components/cute/illustrations";
 
 function formatWhen(iso: string): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(LOCALE, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(iso));
@@ -30,13 +31,13 @@ export default async function NotificationsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Уведомления</h1>
           <p className="text-muted-foreground">
-            Updates from your household — confirmed or skipped payments and
-            membership changes.
+            Новости твоей семьи — подтверждённые или пропущенные платежи и
+            изменения в составе.
           </p>
         </div>
-        {hasUnread ? <MarkReadButton label="Mark all as read" /> : null}
+        {hasUnread ? <MarkReadButton label="Прочитать все" /> : null}
       </div>
 
       {error ? (
@@ -46,7 +47,7 @@ export default async function NotificationsPage() {
       ) : null}
 
       {notifications.length === 0 && !error ? (
-        <EmptyState title="No notifications yet">You will see updates here when your partner confirms payments or joins the household.</EmptyState>
+        <EmptyState title="Уведомлений пока нет">Здесь появятся новости, когда твоя половинка подтвердит платёж или присоединится к семье.</EmptyState>
       ) : (
         <ul className="grid gap-2">
           {notifications.map((notification) => (
@@ -60,7 +61,7 @@ export default async function NotificationsPage() {
                 <p className="font-medium">
                   {notification.is_read ? null : (
                     <>
-                      <span className="sr-only">Unread: </span>
+                      <span className="sr-only">Не прочитано: </span>
                       <Heart className="mr-1.5 inline size-3.5 -translate-y-px text-primary" />
                     </>
                   )}
@@ -77,11 +78,11 @@ export default async function NotificationsPage() {
                     href={notification.link}
                     className="underline-offset-4 hover:underline"
                   >
-                    Open
+                    Открыть
                   </Link>
                 ) : null}
                 {notification.is_read ? null : (
-                  <MarkReadButton ids={[notification.id]} label="Mark as read" />
+                  <MarkReadButton ids={[notification.id]} label="Прочитано" />
                 )}
               </div>
             </li>

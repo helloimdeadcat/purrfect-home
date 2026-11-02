@@ -86,11 +86,11 @@ export function aggregateShopping(portions: Portion[]): ShoppingLine[] {
   return [...byFood.entries()].map(([foodId, grams]) => ({ foodId, grams }));
 }
 
-/** "2 150 g" → "2.15 kg" style compact label (kept locale-free for tests). */
+/** 2150 → "2,15 кг", 85 → "85 г" (Russian units, decimal comma). */
 export function formatGrams(grams: number): string {
   if (grams >= 1000) {
     const kg = Math.round(grams / 10) / 100;
-    return `${kg} kg`;
+    return `${String(kg).replace(".", ",")} кг`;
   }
-  return `${Math.round(grams)} g`;
+  return `${Math.round(grams)} г`;
 }

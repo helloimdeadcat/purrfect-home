@@ -20,7 +20,7 @@ export async function PATCH(request: Request, context: RouteContext) {
     if (!auth.ok) return auth.response;
 
     const { id } = await context.params;
-    if (!id) return jsonError(400, "Transaction id is required");
+    if (!id) return jsonError(400, "Нужен id операции");
 
     const body: unknown = await request.json();
     const input = updateTransactionSchema.parse(body);
@@ -45,7 +45,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
     if (!auth.ok) return auth.response;
 
     const { id } = await context.params;
-    if (!id) return jsonError(400, "Transaction id is required");
+    if (!id) return jsonError(400, "Нужен id операции");
 
     const { error } = await softDeleteTransaction(
       auth.value.supabase,

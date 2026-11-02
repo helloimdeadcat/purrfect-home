@@ -30,19 +30,31 @@ function chunk<T>(items: T[], size: number): T[][] {
 }
 
 export const TRANSACTION_CSV_HEADER = [
-  "date",
-  "type",
-  "adjustment_direction",
-  "amount",
-  "currency",
-  "account",
-  "category",
-  "income_source",
-  "tags",
-  "merchant",
-  "description",
-  "notes",
+  "Дата",
+  "Тип",
+  "Направление корректировки",
+  "Сумма",
+  "Валюта",
+  "Счёт",
+  "Категория",
+  "Источник дохода",
+  "Метки",
+  "Магазин",
+  "Описание",
+  "Заметки",
 ];
+
+const TRANSACTION_TYPE_LABEL: Record<string, string> = {
+  expense: "Расход",
+  income: "Доход",
+  transfer: "Перевод",
+  adjustment: "Корректировка",
+};
+
+const ADJUSTMENT_DIRECTION_LABEL: Record<string, string> = {
+  increase: "Увеличение",
+  decrease: "Уменьшение",
+};
 
 /**
  * Factual transactions for a date range (soft-deleted rows excluded).
@@ -106,8 +118,10 @@ export async function exportTransactionsCsv(
 
   const body: CsvCell[][] = rows.map((r) => [
     r.transaction_date,
-    r.type,
-    r.adjustment_direction ?? "",
+    TRANSACTION_TYPE_LABEL[r.type] ?? r.type,
+    r.adjustment_direction
+      ? (ADJUSTMENT_DIRECTION_LABEL[r.adjustment_direction] ?? r.adjustment_direction)
+      : "",
     { numeric: asMoney(r.amount) },
     r.currency,
     accountName.get(r.account_id) ?? "",
@@ -122,7 +136,20 @@ export async function exportTransactionsCsv(
   return { data: toCsv(TRANSACTION_CSV_HEADER, body), error: null };
 }
 
-export const ANALYTICS_CSV_HEADER = ["section", "item", "period", "amount", "currency"];
+export const ANALYTICS_CSV_HEADER = ["Раздел", "Показатель", "Период", "Сумма", "Валюта"];
+
+const SECTION = {
+  summary: "Итоги",
+  summaryPrevious: "Итоги прошлого периода",
+  cashFlow: "Движение денег",
+  expensesByCategory: "Расходы по категориям",
+  incomeByCategory: "Доходы по категориям",
+  incomeBySource: "Доходы по источникам",
+  budgetLimit: "Лимит бюджета",
+  budgetSpent: "Потрачено из бюджета",
+};
+
+const ITEM = { income: "Доход", expense: "Расход", net: "Итого" };
 
 /**
  * The analytics report in long format (one value per row) — easy to pivot
@@ -138,7 +165,7 @@ export async function exportAnalyticsCsv(
   error: ServiceError | null;
 }> {
   const { data: report, error } = await getAnalyticsReport(supabase, ctx, input);
-  if (error || !report) return { data: null, error: error ?? err("DB", "Report unavailable") };
+  if (error || !report) return { data: null, error: error ?? err("DB", "Отчёт недоступен") };
 
   const c = report.currency;
   const period = `${report.range.start}..${report.range.end}`;
@@ -146,31 +173,31 @@ export async function exportAnalyticsCsv(
   const num = (value: string) => ({ numeric: asMoney(value) });
 
   const rows: CsvCell[][] = [
-    ["summary", "income", period, num(report.summary.income), c],
-    ["summary", "expense", period, num(report.summary.expense), c],
-    ["summary", "net", period, num(report.summary.net), c],
-    ["summary_previous", "income", previous, num(report.summary.previousIncome), c],
-    ["summary_previous", "expense", previous, num(report.summary.previousExpense), c],
-    ["summary_previous", "net", previous, num(report.summary.previousNet), c],
+    [SECTION.summary, ITEM.income, period, num(report.summary.income), c],
+    [SECTION.summary, ITEM.expense, period, num(report.summary.expense), c],
+    [SECTION.summary, ITEM.net, period, num(report.summary.net), c],
+    [SECTION.summaryPrevious, ITEM.income, previous, num(report.summary.previousIncome), c],
+    [SECTION.summaryPrevious, ITEM.expense, previous, num(report.summary.previousExpense), c],
+    [SECTION.summaryPrevious, ITEM.net, previous, num(report.summary.previousNet), c],
   ];
   for (const point of report.cashFlow) {
-    rows.push(["cash_flow", "income", point.month, num(point.income), c]);
-    rows.push(["cash_flow", "expense", point.month, num(point.expense), c]);
-    rows.push(["cash_flow", "net", point.month, num(point.net), c]);
+    rows.push([SECTION.cashFlow, ITEM.income, point.month, num(point.income), c]);
+    rows.push([SECTION.cashFlow, ITEM.expense, point.month, num(point.expense), c]);
+    rows.push([SECTION.cashFlow, ITEM.net, point.month, num(point.net), c]);
   }
   for (const row of report.expensesByCategory) {
-    rows.push(["expenses_by_category", row.categoryName, period, num(row.amount), c]);
+    rows.push([SECTION.expensesByCategory, row.categoryName, period, num(row.amount), c]);
   }
   for (const row of report.incomeByCategory) {
-    rows.push(["income_by_category", row.categoryName, period, num(row.amount), c]);
+    rows.push([SECTION.incomeByCategory, row.categoryName, period, num(row.amount), c]);
   }
   for (const row of report.incomeBySource) {
-    rows.push(["income_by_source", row.sourceName, period, num(row.amount), c]);
+    rows.push([SECTION.incomeBySource, row.sourceName, period, num(row.amount), c]);
   }
   for (const row of report.budgets.rows) {
-    const label = row.categoryName ?? "Budget";
-    rows.push(["budget_limit", label, report.budgets.month, num(row.limit), c]);
-    rows.push(["budget_spent", label, report.budgets.month, num(row.spent), c]);
+    const label = row.categoryName ?? "Бюджет";
+    rows.push([SECTION.budgetLimit, label, report.budgets.month, num(row.limit), c]);
+    rows.push([SECTION.budgetSpent, label, report.budgets.month, num(row.spent), c]);
   }
 
   return {

@@ -57,7 +57,7 @@ export async function createTransaction(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot create transactions"),
+      error: err("FORBIDDEN", "Наблюдатели не могут добавлять операции"),
     };
   }
 
@@ -72,7 +72,7 @@ export async function createTransaction(
     return { data: null, error: err("DB", accountError.message) };
   }
   if (!account || !account.is_active) {
-    return { data: null, error: err("VALIDATION", "Account not found or inactive") };
+    return { data: null, error: err("VALIDATION", "Счёт не найден или неактивен") };
   }
   if (
     input.currency &&
@@ -80,7 +80,7 @@ export async function createTransaction(
   ) {
     return {
       data: null,
-      error: err("VALIDATION", "Transaction currency must match the account currency"),
+      error: err("VALIDATION", "Валюта операции должна совпадать с валютой счёта"),
     };
   }
 
@@ -107,7 +107,7 @@ export async function createTransaction(
       (category.household_id !== null &&
         category.household_id !== ctx.householdId)
     ) {
-      return { data: null, error: err("VALIDATION", "Category not found") };
+      return { data: null, error: err("VALIDATION", "Категория не найдена") };
     }
     if (
       category.type !== "both" &&
@@ -116,7 +116,7 @@ export async function createTransaction(
     ) {
       return {
         data: null,
-        error: err("VALIDATION", "Category type does not match transaction type"),
+        error: err("VALIDATION", "Тип категории не подходит к типу операции"),
       };
     }
   }
@@ -126,7 +126,7 @@ export async function createTransaction(
     if (input.type !== "income") {
       return {
         data: null,
-        error: err("VALIDATION", "Income source is only allowed for income"),
+        error: err("VALIDATION", "Источник дохода можно указать только для дохода"),
       };
     }
     const { data: source, error: sourceError } = await supabase
@@ -139,7 +139,7 @@ export async function createTransaction(
       return { data: null, error: err("DB", sourceError.message) };
     }
     if (!source || !source.is_active) {
-      return { data: null, error: err("VALIDATION", "Income source not found") };
+      return { data: null, error: err("VALIDATION", "Источник дохода не найден") };
     }
     incomeSourceId = source.id;
   }
@@ -172,7 +172,7 @@ export async function createTransaction(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create transaction"),
+      error: err("DB", error?.message ?? "Не получилось добавить операцию"),
     };
   }
 
@@ -200,7 +200,7 @@ export async function updateTransaction(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot update transactions"),
+      error: err("FORBIDDEN", "Наблюдатели не могут менять операции"),
     };
   }
 
@@ -216,7 +216,7 @@ export async function updateTransaction(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Transaction not found") };
+    return { data: null, error: err("NOT_FOUND", "Операция не найдена") };
   }
 
   if (
@@ -226,7 +226,7 @@ export async function updateTransaction(
   ) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Members can only edit their own transactions"),
+      error: err("FORBIDDEN", "Менять можно только свои операции"),
     };
   }
 
@@ -245,7 +245,7 @@ export async function updateTransaction(
     if (!account || !account.is_active) {
       return {
         data: null,
-        error: err("VALIDATION", "Account not found or inactive in this household"),
+        error: err("VALIDATION", "Счёт не найден или неактивен в этой семье"),
       };
     }
     targetAccountCurrency = account.currency.toUpperCase();
@@ -257,7 +257,7 @@ export async function updateTransaction(
   if (targetAccountCurrency !== null && targetAccountCurrency !== nextCurrency) {
     return {
       data: null,
-      error: err("VALIDATION", "Transaction currency must match the account currency"),
+      error: err("VALIDATION", "Валюта операции должна совпадать с валютой счёта"),
     };
   }
   if (
@@ -267,7 +267,7 @@ export async function updateTransaction(
   ) {
     return {
       data: null,
-      error: err("VALIDATION", "Transaction currency must match the account currency"),
+      error: err("VALIDATION", "Валюта операции должна совпадать с валютой счёта"),
     };
   }
 
@@ -316,7 +316,7 @@ export async function updateTransaction(
       if (nextType !== "income") {
         return {
           data: null,
-          error: err("VALIDATION", "Income source is only allowed for income"),
+          error: err("VALIDATION", "Источник дохода можно указать только для дохода"),
         };
       }
       const { data: source, error: sourceError } = await supabase
@@ -331,7 +331,7 @@ export async function updateTransaction(
       if (!source) {
         return {
           data: null,
-          error: err("VALIDATION", "Income source not found"),
+          error: err("VALIDATION", "Источник дохода не найден"),
         };
       }
       // Allow assigning archived sources only when already linked historically;
@@ -339,7 +339,7 @@ export async function updateTransaction(
       if (!source.is_active && existing.income_source_id !== source.id) {
         return {
           data: null,
-          error: err("VALIDATION", "Income source is archived"),
+          error: err("VALIDATION", "Источник дохода в архиве"),
         };
       }
       patch.income_source_id = source.id;
@@ -361,7 +361,7 @@ export async function updateTransaction(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update transaction"),
+      error: err("DB", error?.message ?? "Не получилось обновить операцию"),
     };
   }
 
@@ -386,7 +386,7 @@ export async function softDeleteTransaction(
   transactionId: string,
 ): Promise<{ error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { error: err("FORBIDDEN", "Viewers cannot delete transactions") };
+    return { error: err("FORBIDDEN", "Наблюдатели не могут удалять операции") };
   }
 
   const { data: existing, error: existingError } = await supabase
@@ -401,12 +401,12 @@ export async function softDeleteTransaction(
     return { error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { error: err("NOT_FOUND", "Transaction not found") };
+    return { error: err("NOT_FOUND", "Операция не найдена") };
   }
 
   if (ctx.role === "member" && existing.created_by !== ctx.user.id) {
     return {
-      error: err("FORBIDDEN", "Members can only delete their own transactions"),
+      error: err("FORBIDDEN", "Удалять можно только свои операции"),
     };
   }
 

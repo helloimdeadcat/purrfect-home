@@ -3,12 +3,12 @@ import { z } from "zod";
 const dateSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД");
 
 const timeSchema = z
   .string()
   .trim()
-  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:MM");
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Формат времени: ЧЧ:ММ");
 
 /** Optional free text; the service stores "" as null. */
 const optionalText = (max: number) => z.string().trim().max(max).nullable().optional();
@@ -21,7 +21,7 @@ export const taskRepeatSchema = z.discriminatedUnion("kind", [
     interval: z.number().int().min(1).max(52).default(1),
     weekdays: z
       .array(z.number().int().min(1).max(7))
-      .min(1, "Pick at least one day")
+      .min(1, "Выбери хотя бы один день")
       .max(7)
       .transform((days) => [...new Set(days)].sort()),
   }),
@@ -33,7 +33,7 @@ export const taskRepeatSchema = z.discriminatedUnion("kind", [
 ]);
 
 const taskFields = {
-  title: z.string().trim().min(1, "Title is required").max(200),
+  title: z.string().trim().min(1, "Нужно название").max(200),
   notes: optionalText(2000),
   /** null = for both partners */
   assigneeMemberId: z.uuid().nullable().optional(),
@@ -55,19 +55,19 @@ type TaskShape = {
 function checkConsistency(data: TaskShape, ctx: z.RefinementCtx) {
   const repeating = data.repeat && data.repeat.kind !== "none";
   if (repeating && !data.startDate) {
-    ctx.addIssue({ code: "custom", path: ["startDate"], message: "Repeating items need a start date" });
+    ctx.addIssue({ code: "custom", path: ["startDate"], message: "Для повтора нужна дата начала" });
   }
   if (data.startTime && !data.startDate) {
-    ctx.addIssue({ code: "custom", path: ["startDate"], message: "A time needs a date" });
+    ctx.addIssue({ code: "custom", path: ["startDate"], message: "Для времени нужна дата" });
   }
   if (data.endTime && !data.startTime) {
-    ctx.addIssue({ code: "custom", path: ["startTime"], message: "Set a start time first" });
+    ctx.addIssue({ code: "custom", path: ["startTime"], message: "Сначала укажи время начала" });
   }
   if (data.endTime && data.startTime && data.endTime <= data.startTime) {
-    ctx.addIssue({ code: "custom", path: ["endTime"], message: "End must be after start" });
+    ctx.addIssue({ code: "custom", path: ["endTime"], message: "Конец должен быть позже начала" });
   }
   if (data.repeatUntil && data.startDate && data.repeatUntil < data.startDate) {
-    ctx.addIssue({ code: "custom", path: ["repeatUntil"], message: "Must be on or after the start date" });
+    ctx.addIssue({ code: "custom", path: ["repeatUntil"], message: "Не раньше даты начала" });
   }
 }
 
@@ -77,7 +77,7 @@ export const updateTaskSchema = z
   .object({ ...taskFields, title: taskFields.title.optional(), isArchived: z.boolean().optional() })
   .superRefine(checkConsistency)
   .refine((value) => Object.values(value).some((entry) => entry !== undefined), {
-    message: "No changes provided",
+    message: "Нет изменений",
   });
 
 export const setTaskCompletionSchema = z.object({
@@ -88,10 +88,10 @@ export const setTaskCompletionSchema = z.object({
 
 export const agendaQuerySchema = z
   .object({ from: dateSchema, to: dateSchema })
-  .refine((value) => value.to >= value.from, { message: "to must be on or after from" })
+  .refine((value) => value.to >= value.from, { message: "Конец периода не может быть раньше начала" })
   .refine(
     (value) => (Date.parse(value.to) - Date.parse(value.from)) / 86_400_000 <= 62,
-    { message: "Range cannot exceed 62 days" },
+    { message: "Период не может быть длиннее 62 дней" },
   );
 
 export type TaskRepeatInput = z.infer<typeof taskRepeatSchema>;

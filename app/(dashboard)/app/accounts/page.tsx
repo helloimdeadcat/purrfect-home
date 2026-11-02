@@ -12,6 +12,15 @@ import {
 import { getHouseholdToday } from "@/services/settings-service";
 import { EmptyState } from "@/components/cute/empty-state";
 
+const ACCOUNT_TYPE_LABELS: Record<string, string> = {
+  bank_account: "Банковский счёт",
+  credit_card: "Кредитная карта",
+  cash: "Наличные",
+  savings: "Сбережения",
+  investment: "Инвестиции",
+  other: "Другое",
+};
+
 export default async function AccountsPage() {
   const { supabase, user } = await getSessionUser();
   if (!user) redirect("/login");
@@ -30,10 +39,10 @@ export default async function AccountsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Accounts</h1>
+          <h1 className="text-2xl font-semibold tracking-tight">Счета</h1>
           <p className="text-muted-foreground">
-            Balances are calculated from transactions and transfers. FX
-            conversion is not implemented.
+            Баланс считается по операциям и переводам. Конвертации валют
+            пока нет.
           </p>
         </div>
         <div className="text-right">
@@ -56,13 +65,13 @@ export default async function AccountsPage() {
 
       {accountsError ? (
         <p className="text-sm text-destructive" role="alert">
-          Balances could not be loaded: {accountsError.message}
+          Не удалось загрузить балансы: {accountsError.message}
         </p>
       ) : null}
 
       <section className="grid gap-3">
         {list.length === 0 && !accountsError ? (
-          <EmptyState title="No accounts yet">Add a bank account, card or cash wallet below.</EmptyState>
+          <EmptyState title="Пока нет счетов">Добавь ниже банковский счёт, карту или кошелёк с наличными.</EmptyState>
         ) : (
           list.map((account) => (
             <div
@@ -74,12 +83,12 @@ export default async function AccountsPage() {
                   {account.name}
                   {!account.is_active ? (
                     <span className="ml-2 text-xs text-muted-foreground">
-                      inactive
+                      неактивен
                     </span>
                   ) : null}
                 </p>
-                <p className="text-sm text-muted-foreground capitalize">
-                  {account.type.replaceAll("_", " ")} · {account.currency}
+                <p className="text-sm text-muted-foreground">
+                  {ACCOUNT_TYPE_LABELS[account.type] ?? account.type} · {account.currency}
                 </p>
               </div>
               <p className="text-right font-medium tabular-nums">

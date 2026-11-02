@@ -154,7 +154,7 @@ export async function createTask(
   input: CreateTaskInput,
 ): Promise<{ data: TaskRow | null; error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { data: null, error: err("FORBIDDEN", "Viewers cannot add tasks") };
+    return { data: null, error: err("FORBIDDEN", "Наблюдатели не могут добавлять дела") };
   }
 
   const repeat = input.repeat ?? { kind: "none" };
@@ -177,7 +177,7 @@ export async function createTask(
     .single();
 
   if (error || !data) {
-    return { data: null, error: err("DB", error?.message ?? "Failed to add task") };
+    return { data: null, error: err("DB", error?.message ?? "Не получилось добавить дело") };
   }
   return { data, error: null };
 }
@@ -194,7 +194,7 @@ async function loadTask(
     .eq("household_id", ctx.householdId)
     .maybeSingle();
   if (error) return { data: null, error: err("DB", error.message) };
-  if (!data) return { data: null, error: err("NOT_FOUND", "Task not found") };
+  if (!data) return { data: null, error: err("NOT_FOUND", "Дело не найдено") };
   return { data, error: null };
 }
 
@@ -205,7 +205,7 @@ export async function updateTask(
   input: UpdateTaskInput,
 ): Promise<{ data: TaskRow | null; error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { data: null, error: err("FORBIDDEN", "Viewers cannot edit tasks") };
+    return { data: null, error: err("FORBIDDEN", "Наблюдатели не могут менять дела") };
   }
   const existing = await loadTask(supabase, ctx, taskId);
   if (existing.error || !existing.data) return existing;
@@ -239,10 +239,10 @@ export async function updateTask(
   // Cross-field rules against the merged row (the schema only sees the patch).
   const nextStartDate = input.startDate !== undefined ? input.startDate : current.start_date;
   if (nextRepeatKind !== "none" && !nextStartDate) {
-    return { data: null, error: err("VALIDATION", "Repeating items need a start date") };
+    return { data: null, error: err("VALIDATION", "Для повтора нужна дата начала") };
   }
   if (nextStartTime && !nextStartDate) {
-    return { data: null, error: err("VALIDATION", "A time needs a date") };
+    return { data: null, error: err("VALIDATION", "Для времени нужна дата") };
   }
 
   const { data, error } = await supabase
@@ -253,7 +253,7 @@ export async function updateTask(
     .select("*")
     .single();
   if (error || !data) {
-    return { data: null, error: err("DB", error?.message ?? "Failed to update task") };
+    return { data: null, error: err("DB", error?.message ?? "Не получилось сохранить дело") };
   }
   return { data, error: null };
 }
@@ -264,12 +264,12 @@ export async function deleteTask(
   taskId: string,
 ): Promise<{ error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { error: err("FORBIDDEN", "Viewers cannot delete tasks") };
+    return { error: err("FORBIDDEN", "Наблюдатели не могут удалять дела") };
   }
   const existing = await loadTask(supabase, ctx, taskId);
   if (existing.error || !existing.data) return { error: existing.error };
   if (!canAdmin(ctx.role) && existing.data.created_by !== ctx.user.id) {
-    return { error: err("FORBIDDEN", "Only the creator or an owner/admin can delete this task") };
+    return { error: err("FORBIDDEN", "Удалить это дело может только автор или владелец/админ") };
   }
 
   const { error } = await supabase
@@ -292,7 +292,7 @@ export async function setTaskCompletion(
   input: SetTaskCompletionInput,
 ): Promise<{ error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { error: err("FORBIDDEN", "Viewers cannot tick off tasks") };
+    return { error: err("FORBIDDEN", "Наблюдатели не могут отмечать дела") };
   }
   const existing = await loadTask(supabase, ctx, taskId);
   if (existing.error || !existing.data) return { error: existing.error };
@@ -300,7 +300,7 @@ export async function setTaskCompletion(
 
   if (task.repeat_kind !== "none") {
     if (!input.date) {
-      return { error: err("VALIDATION", "Repeating items need the occurrence date") };
+      return { error: err("VALIDATION", "Для повторяющегося дела нужна дата") };
     }
     if (input.done) {
       const { error } = await supabase.from("task_completions").upsert(

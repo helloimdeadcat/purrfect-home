@@ -1,3 +1,4 @@
+import { LOCALE } from "@/lib/locale";
 import type { Money } from "@/types/database";
 
 const SCALE = BigInt(100); // numeric(15,2) — minor units (cents)
@@ -95,7 +96,7 @@ export function displayMoney(value: MoneyInput, currency = "EUR"): string {
   const minor = parseMoney(value);
   const amount = Number(minor) / Number(SCALE);
   try {
-    return new Intl.NumberFormat(undefined, {
+    return new Intl.NumberFormat(LOCALE, {
       style: "currency",
       currency,
       minimumFractionDigits: 2,

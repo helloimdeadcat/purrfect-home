@@ -56,12 +56,12 @@ export function TaskItem({
       router.refresh();
     } catch {
       setDone(!next);
-      setError("Couldn't update — try again");
+      setError("Не получилось обновить — попробуй ещё раз");
     }
   }
 
   async function remove() {
-    if (!window.confirm(item.repeating ? "Delete this repeating item and all its dates?" : "Delete this item?")) {
+    if (!window.confirm(item.repeating ? "Удалить это повторяющееся дело со всеми датами?" : "Удалить это дело?")) {
       return;
     }
     setBusy(true);
@@ -69,7 +69,7 @@ export function TaskItem({
       const response = await fetch(`/api/tasks/${item.taskId}`, { method: "DELETE" });
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
-        setError(data.error ?? "Couldn't delete");
+        setError(data.error ?? "Не получилось удалить");
         return;
       }
       router.refresh();
@@ -89,7 +89,7 @@ export function TaskItem({
           checked={done}
           onChange={() => void toggle()}
           disabled={!canEdit}
-          aria-label={`Mark "${item.title}" as ${done ? "not done" : "done"}`}
+          aria-label={`${done ? "Снять отметку с" : "Отметить готовым"} «${item.title}»`}
           className="mt-1 size-4.5 shrink-0 accent-[var(--primary)]"
         />
         <div className="min-w-0 flex-1">
@@ -100,12 +100,12 @@ export function TaskItem({
             <span className="inline-flex items-center gap-1">
               <span aria-hidden className="size-2 rounded-full" style={{ background: person.color }} />
               {person.label}
-              {person.isYou ? " (you)" : ""}
+              {person.isYou ? " (ты)" : ""}
             </span>
             {showDate && item.date ? <span>{item.date}</span> : null}
             {time ? <span className="font-medium text-foreground tabular-nums">{time}</span> : null}
             {repeatLabel ? <span>↻ {repeatLabel}</span> : null}
-            {item.overdue ? <span className="font-semibold text-destructive">overdue</span> : null}
+            {item.overdue ? <span className="font-semibold text-destructive">просрочено</span> : null}
           </p>
           {error ? (
             <p className="text-xs text-destructive" role="alert">
@@ -116,11 +116,11 @@ export function TaskItem({
         {canEdit ? (
           <div className="flex shrink-0 gap-1">
             <Button type="button" size="xs" variant="ghost" onClick={() => setEditing((v) => !v)} disabled={!task}>
-              Edit
+              Изменить
             </Button>
             {canDelete ? (
               <Button type="button" size="xs" variant="ghost" onClick={() => void remove()} disabled={busy}>
-                Delete
+                Удалить
               </Button>
             ) : null}
           </div>
@@ -130,7 +130,7 @@ export function TaskItem({
         <div className="border-t border-border bg-muted/40 p-3">
           {item.repeating ? (
             <p className="mb-2 text-xs text-muted-foreground">
-              Changes apply to every date of this repeating item.
+              Изменения применятся ко всем датам этого повторяющегося дела.
             </p>
           ) : null}
           <TaskForm people={people} defaultDate={task.start_date} task={task} onDone={() => setEditing(false)} />

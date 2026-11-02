@@ -12,7 +12,7 @@ export const analyticsPeriodPresetSchema = z.enum([
 const dateSchema = z
   .string()
   .trim()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD");
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Формат даты: ГГГГ-ММ-ДД");
 
 export const analyticsQuerySchema = z
   .object({
@@ -32,7 +32,7 @@ export const analyticsQuerySchema = z
       if (!data.from || !data.to) {
         ctx.addIssue({
           code: "custom",
-          message: "Custom period requires from and to",
+          message: "Для своего периода укажи даты «с» и «по»",
           path: ["from"],
         });
       }

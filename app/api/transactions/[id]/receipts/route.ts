@@ -49,18 +49,18 @@ export async function POST(request: Request, context: RouteContext) {
     // Reject obviously oversized bodies before buffering them.
     const declared = Number(request.headers.get("content-length") ?? "0");
     if (declared > MAX_RECEIPT_BYTES + MULTIPART_OVERHEAD_BYTES) {
-      return jsonError(413, "File is larger than 8 MB");
+      return jsonError(413, "Файл больше 8 МБ");
     }
 
     let form: FormData;
     try {
       form = await request.formData();
     } catch {
-      return jsonError(400, "Expected multipart/form-data with a file field");
+      return jsonError(400, "Нужен multipart/form-data с полем file");
     }
     const file = form.get("file");
     if (!(file instanceof File)) {
-      return jsonError(400, "Missing file");
+      return jsonError(400, "Файл не выбран");
     }
 
     const { data, error } = await uploadReceipt(

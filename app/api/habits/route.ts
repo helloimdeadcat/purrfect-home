@@ -12,7 +12,7 @@ export async function GET() {
     if (!auth.ok) return auth.response;
 
     const { data, error } = await loadHabitBoard(auth.value.supabase, auth.value.ctx);
-    if (error || !data) return fromServiceError(error ?? { code: "DB", message: "Failed" });
+    if (error || !data) return fromServiceError(error ?? { code: "DB", message: "Не получилось загрузить" });
 
     return Response.json({
       today: data.today,

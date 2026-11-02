@@ -37,14 +37,14 @@ async function assertAccount(
 
   if (error) return { error: err("DB", error.message) };
   if (!account || !account.is_active) {
-    return { error: err("VALIDATION", "Account not found or inactive") };
+    return { error: err("VALIDATION", "Счёт не найден или в архиве") };
   }
   const resolved = (currency ?? account.currency).toUpperCase();
   if (resolved !== account.currency.toUpperCase()) {
     return {
       error: err(
         "VALIDATION",
-        "Currency must match the selected account (FX conversion is not implemented)",
+        "Валюта должна совпадать с валютой счёта (пересчёт курсов пока не поддерживается)",
       ),
     };
   }
@@ -63,7 +63,7 @@ async function assertMember(
     .eq("household_id", ctx.householdId)
     .maybeSingle();
   if (error) return err("DB", error.message);
-  if (!data) return err("VALIDATION", "Member not found in this household");
+  if (!data) return err("VALIDATION", "Такого участника в семье нет");
   return null;
 }
 
@@ -95,7 +95,7 @@ export async function createIncomeSource(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot create income sources"),
+      error: err("FORBIDDEN", "Наблюдатели не могут создавать источники дохода"),
     };
   }
 
@@ -130,7 +130,7 @@ export async function createIncomeSource(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create income source"),
+      error: err("DB", error?.message ?? "Не получилось создать источник дохода"),
     };
   }
   return { data, error: null };
@@ -145,7 +145,7 @@ export async function updateIncomeSource(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot update income sources"),
+      error: err("FORBIDDEN", "Наблюдатели не могут менять источники дохода"),
     };
   }
 
@@ -160,7 +160,7 @@ export async function updateIncomeSource(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Income source not found") };
+    return { data: null, error: err("NOT_FOUND", "Источник дохода не найден") };
   }
 
   if (input.memberId) {
@@ -202,7 +202,7 @@ export async function updateIncomeSource(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update income source"),
+      error: err("DB", error?.message ?? "Не получилось обновить источник дохода"),
     };
   }
   return { data, error: null };
@@ -217,7 +217,7 @@ export async function archiveIncomeSource(
     return {
       error: err(
         "FORBIDDEN",
-        "Only owners and admins can archive income sources",
+        "Архивировать источники дохода могут только владелец и админы",
       ),
     };
   }
@@ -230,7 +230,7 @@ export async function archiveIncomeSource(
     .maybeSingle();
 
   if (existingError) return { error: err("DB", existingError.message) };
-  if (!existing) return { error: err("NOT_FOUND", "Income source not found") };
+  if (!existing) return { error: err("NOT_FOUND", "Источник дохода не найден") };
 
   const { error } = await supabase
     .from("income_sources")

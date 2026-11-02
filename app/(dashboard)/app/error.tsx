@@ -22,21 +22,21 @@ export default function AppError({
     <div className="flex flex-col items-start gap-3" role="alert">
       <SleepyCat className="w-40" />
       <h1 className="text-2xl font-semibold tracking-tight">
-        Oops, something went wrong
+        Ой, что-то пошло не так
       </h1>
       <p className="text-sm text-muted-foreground">
-        This page could not be loaded. Your data has not been changed. Check
-        your connection and try again.
+        Не получилось загрузить страницу. Твои данные не изменились. Проверь
+        подключение и попробуй ещё раз.
       </p>
       <div className="flex gap-2">
         <Button type="button" size="sm" onClick={() => retry()}>
-          Try again
+          Попробовать снова
         </Button>
         <Link
           href="/app/dashboard"
           className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
         >
-          Dashboard
+          Главная
         </Link>
       </div>
     </div>

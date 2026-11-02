@@ -15,6 +15,7 @@ import {
   sanitizeReceiptFileName,
   validateReceiptBytes,
 } from "@/lib/validations/receipt";
+import { receiptBudgetError } from "@/services/usage-service";
 import type { Database } from "@/types/database";
 
 type AppSupabase = SupabaseClient<Database>;
@@ -60,12 +61,12 @@ async function loadEditableTransaction(
     .maybeSingle();
 
   if (error) return { error: err("DB", error.message) };
-  if (!tx) return { error: err("NOT_FOUND", "Transaction not found") };
+  if (!tx) return { error: err("NOT_FOUND", "Операция не найдена") };
 
   // Same rule as editing the transaction itself.
   if (ctx.role === "member" && tx.created_by !== ctx.user.id) {
     return {
-      error: err("FORBIDDEN", "Members can only attach receipts to their own transactions"),
+      error: err("FORBIDDEN", "Прикреплять чеки можно только к своим операциям"),
     };
   }
   return { error: null };
@@ -105,7 +106,7 @@ export async function uploadReceipt(
   file: { bytes: Uint8Array; fileName: string | null },
 ): Promise<{ data: ReceiptView | null; error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { data: null, error: err("FORBIDDEN", "Viewers cannot upload receipts") };
+    return { data: null, error: err("FORBIDDEN", "Наблюдатели не могут загружать чеки") };
   }
 
   const check = validateReceiptBytes(file.bytes);
@@ -132,6 +133,11 @@ export async function uploadReceipt(
     };
   }
 
+  const budgetMessage = await receiptBudgetError(supabase, ctx.householdId, check.size);
+  if (budgetMessage) {
+    return { data: null, error: err("VALIDATION", budgetMessage) };
+  }
+
   const storagePath = buildReceiptStoragePath({
     householdId: ctx.householdId,
     transactionId,
@@ -146,7 +152,7 @@ export async function uploadReceipt(
       upsert: false,
     });
   if (uploadError) {
-    return { data: null, error: err("DB", "Could not store the file") };
+    return { data: null, error: err("DB", "Не получилось сохранить файл") };
   }
 
   const { data: row, error: insertError } = await supabase
@@ -169,7 +175,7 @@ export async function uploadReceipt(
     // cleanup uses the service role — scoped to the exact path this request
     // created, after RLS already authorised the upload.
     await createAdminClient().storage.from(RECEIPTS_BUCKET).remove([storagePath]);
-    return { data: null, error: err("DB", "Could not save the receipt") };
+    return { data: null, error: err("DB", "Не получилось сохранить чек") };
   }
 
   return { data: toView(row, ctx), error: null };
@@ -188,7 +194,7 @@ export async function getReceiptDownloadUrl(
     .maybeSingle();
 
   if (error) return { data: null, error: err("DB", error.message) };
-  if (!row) return { data: null, error: err("NOT_FOUND", "Receipt not found") };
+  if (!row) return { data: null, error: err("NOT_FOUND", "Чек не найден") };
 
   // Signed with the user's session, so storage RLS is checked again here.
   const { data, error: signError } = await supabase.storage
@@ -197,7 +203,7 @@ export async function getReceiptDownloadUrl(
       download: row.file_name,
     });
   if (signError || !data?.signedUrl) {
-    return { data: null, error: err("NOT_FOUND", "Receipt file is unavailable") };
+    return { data: null, error: err("NOT_FOUND", "Файл чека недоступен") };
   }
   return { data: data.signedUrl, error: null };
 }
@@ -208,7 +214,7 @@ export async function deleteReceipt(
   receiptId: string,
 ): Promise<{ error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { error: err("FORBIDDEN", "Viewers cannot delete receipts") };
+    return { error: err("FORBIDDEN", "Наблюдатели не могут удалять чеки") };
   }
 
   const { data: row, error } = await supabase
@@ -219,10 +225,10 @@ export async function deleteReceipt(
     .maybeSingle();
 
   if (error) return { error: err("DB", error.message) };
-  if (!row) return { error: err("NOT_FOUND", "Receipt not found") };
+  if (!row) return { error: err("NOT_FOUND", "Чек не найден") };
   if (!toView(row, ctx).canDelete) {
     return {
-      error: err("FORBIDDEN", "Only the uploader or an owner/admin can delete this receipt"),
+      error: err("FORBIDDEN", "Удалить чек может только тот, кто его загрузил, или владелец/админ"),
     };
   }
 
@@ -233,7 +239,7 @@ export async function deleteReceipt(
     .from(RECEIPTS_BUCKET)
     .remove([row.storage_path]);
   if (removeError) {
-    return { error: err("DB", "Could not delete the file") };
+    return { error: err("DB", "Не получилось удалить файл") };
   }
   if ((removed ?? []).length === 0) {
     // Already gone (or not visible) — still drop the dangling row below.

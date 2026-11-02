@@ -4,9 +4,9 @@ import type { ForecastHorizonPreset } from "@/lib/calculations/forecast-horizon"
 import { cn } from "@/lib/utils";
 
 const HORIZONS: { value: ForecastHorizonPreset; label: string }[] = [
-  { value: "end_of_month", label: "End of month" },
-  { value: "next_7_days", label: "Next 7 days" },
-  { value: "next_30_days", label: "Next 30 days" },
+  { value: "end_of_month", label: "До конца месяца" },
+  { value: "next_7_days", label: "7 дней" },
+  { value: "next_30_days", label: "30 дней" },
 ];
 
 type Props = {
@@ -41,7 +41,7 @@ export function ForecastHorizonFilters({
 }: Props) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-      <div className="flex flex-wrap gap-2" role="group" aria-label="Forecast horizon">
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Период прогноза">
         {HORIZONS.map((item) => (
           <Link
             key={item.value}
@@ -61,7 +61,7 @@ export function ForecastHorizonFilters({
         ))}
       </div>
       {currencies.length > 1 ? (
-        <div className="flex flex-wrap gap-2" role="group" aria-label="Currency">
+        <div className="flex flex-wrap gap-2" role="group" aria-label="Валюта">
           {currencies.map((code) => (
             <Link
               key={code}

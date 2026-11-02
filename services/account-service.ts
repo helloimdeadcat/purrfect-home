@@ -26,6 +26,26 @@ function err(code: ServiceError["code"], message: string): ServiceError {
   return { code, message };
 }
 
+/**
+ * Accounts without balances — for pickers and labels. Much cheaper than
+ * listAccountsWithBalances, which pages through every transaction/transfer.
+ */
+export async function listAccounts(
+  supabase: AppSupabase,
+  ctx: HouseholdContext,
+): Promise<{
+  data: Database["public"]["Tables"]["accounts"]["Row"][] | null;
+  error: ServiceError | null;
+}> {
+  const { data, error } = await supabase
+    .from("accounts")
+    .select("*")
+    .eq("household_id", ctx.householdId)
+    .order("name", { ascending: true });
+  if (error) return { data: null, error: err("DB", error.message) };
+  return { data: data ?? [], error: null };
+}
+
 export async function listAccountsWithBalances(
   supabase: AppSupabase,
   ctx: HouseholdContext,
@@ -109,7 +129,7 @@ export async function createAccount(
   input: CreateAccountInput,
 ): Promise<{ data: AccountWithBalance | null; error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { data: null, error: err("FORBIDDEN", "Viewers cannot create accounts") };
+    return { data: null, error: err("FORBIDDEN", "Наблюдатели не могут создавать счета") };
   }
 
   const { data, error } = await supabase
@@ -133,7 +153,7 @@ export async function createAccount(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create account"),
+      error: err("DB", error?.message ?? "Не получилось создать счёт"),
     };
   }
 
@@ -150,7 +170,7 @@ export async function updateAccount(
   input: UpdateAccountInput,
 ): Promise<{ data: AccountWithBalance | null; error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
-    return { data: null, error: err("FORBIDDEN", "Viewers cannot update accounts") };
+    return { data: null, error: err("FORBIDDEN", "Наблюдатели не могут менять счета") };
   }
 
   const { data: existing, error: existingError } = await supabase
@@ -164,7 +184,7 @@ export async function updateAccount(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Account not found") };
+    return { data: null, error: err("NOT_FOUND", "Счёт не найден") };
   }
 
   // Without FX, re-labelling the currency would silently reinterpret every
@@ -196,7 +216,7 @@ export async function updateAccount(
         data: null,
         error: err(
           "VALIDATION",
-          "Currency cannot be changed on an account that already has transactions or transfers",
+          "Валюту нельзя поменять: на счёте уже есть операции или переводы",
         ),
       };
     }
@@ -226,7 +246,7 @@ export async function updateAccount(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update account"),
+      error: err("DB", error?.message ?? "Не получилось обновить счёт"),
     };
   }
 
@@ -245,7 +265,7 @@ export async function deactivateAccount(
   accountId: string,
 ): Promise<{ error: ServiceError | null }> {
   if (!canAdmin(ctx.role)) {
-    return { error: err("FORBIDDEN", "Only owners/admins can deactivate accounts") };
+    return { error: err("FORBIDDEN", "Отключать счета могут только владельцы и админы") };
   }
 
   const { error } = await supabase

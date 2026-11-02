@@ -23,12 +23,12 @@ export function RevokeInvitationButton({ invitationId }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to revoke");
+        setError(data.error ?? "Не получилось отозвать");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -43,7 +43,7 @@ export function RevokeInvitationButton({ invitationId }: Props) {
         disabled={pending}
         onClick={onRevoke}
       >
-        {pending ? "Revoking…" : "Revoke"}
+        {pending ? "Отзываем…" : "Отозвать"}
       </Button>
       {error ? (
         <p className="text-xs text-destructive" role="alert">

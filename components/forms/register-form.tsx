@@ -39,7 +39,7 @@ export function RegisterForm({ inviteToken, invitedEmail }: Props) {
       password: String(form.get("password") ?? ""),
       firstName: String(form.get("firstName") ?? ""),
       lastName: String(form.get("lastName") ?? ""),
-      householdName: String(form.get("householdName") ?? "Our Family"),
+      householdName: String(form.get("householdName") ?? "Наша семья"),
       currency: String(form.get("currency") ?? "EUR"),
       inviteToken: inviteToken || undefined,
     };
@@ -54,14 +54,14 @@ export function RegisterForm({ inviteToken, invitedEmail }: Props) {
       const data = (await response.json()) as RegisterResponse;
 
       if (!response.ok) {
-        setError(data.error ?? "Registration failed");
+        setError(data.error ?? "Не получилось зарегистрироваться");
         return;
       }
 
       if (data.needsEmailConfirmation) {
         setInfo(
           data.message ??
-            "Check your email to confirm your account, then sign in.",
+            "Проверь почту, подтверди аккаунт и войди.",
         );
         return;
       }
@@ -69,7 +69,7 @@ export function RegisterForm({ inviteToken, invitedEmail }: Props) {
       router.push(data.redirectTo ?? "/app/dashboard");
       router.refresh();
     } catch {
-      setError("Network error. Please try again.");
+      setError("Ошибка сети. Попробуй ещё раз.");
     } finally {
       setPending(false);
     }
@@ -83,24 +83,24 @@ export function RegisterForm({ inviteToken, invitedEmail }: Props) {
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       {inviteToken ? (
         <p className="text-sm text-muted-foreground">
-          Register with the invited email, then accept the invitation on the
-          next screen.
+          Зарегистрируйся на почту, на которую пришло приглашение, а потом
+          прими его на следующем экране.
         </p>
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="grid gap-2">
-          <Label htmlFor="firstName">First name</Label>
+          <Label htmlFor="firstName">Имя</Label>
           <Input id="firstName" name="firstName" autoComplete="given-name" required />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="lastName">Last name</Label>
+          <Label htmlFor="lastName">Фамилия</Label>
           <Input id="lastName" name="lastName" autoComplete="family-name" required />
         </div>
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Почта</Label>
         <Input
           id="email"
           name="email"
@@ -112,7 +112,7 @@ export function RegisterForm({ inviteToken, invitedEmail }: Props) {
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">Пароль</Label>
         <Input
           id="password"
           name="password"
@@ -126,17 +126,17 @@ export function RegisterForm({ inviteToken, invitedEmail }: Props) {
       {!inviteToken ? (
         <>
           <div className="grid gap-2">
-            <Label htmlFor="householdName">Household name</Label>
+            <Label htmlFor="householdName">Название семьи</Label>
             <Input
               id="householdName"
               name="householdName"
-              defaultValue="Our Family"
+              defaultValue="Наша семья"
               required
             />
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="currency">Currency</Label>
+            <Label htmlFor="currency">Валюта</Label>
             <Input
               id="currency"
               name="currency"
@@ -148,7 +148,7 @@ export function RegisterForm({ inviteToken, invitedEmail }: Props) {
         </>
       ) : (
         <>
-          <input type="hidden" name="householdName" value="My Household" />
+          <input type="hidden" name="householdName" value="Моя семья" />
           <input type="hidden" name="currency" value="EUR" />
         </>
       )}
@@ -165,13 +165,13 @@ export function RegisterForm({ inviteToken, invitedEmail }: Props) {
       ) : null}
 
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Creating account…" : "Create account"}
+        {pending ? "Создаём аккаунт…" : "Зарегистрироваться"}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        Уже есть аккаунт?{" "}
         <Link href={loginHref} className="underline underline-offset-4">
-          Sign in
+          Войти
         </Link>
       </p>
     </form>

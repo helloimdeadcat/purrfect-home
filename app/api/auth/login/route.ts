@@ -1,6 +1,11 @@
 import { ZodError } from "zod";
 
-import { fromAuthServiceError, fromZodError, jsonError } from "@/lib/auth/errors";
+import {
+  fromAuthServiceError,
+  fromZodError,
+  jsonError,
+  translateAuthMessage,
+} from "@/lib/auth/errors";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema } from "@/lib/validations/auth";
 import { ensureUserBootstrap } from "@/services/auth-service";
@@ -18,11 +23,11 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      return jsonError(401, error.message, { code: "AUTH" });
+      return jsonError(401, translateAuthMessage(error.message), { code: "AUTH" });
     }
 
     if (!data.user || !data.session) {
-      return jsonError(401, "Invalid login response from auth provider");
+      return jsonError(401, "Сервис входа ответил что-то странное — попробуй ещё раз");
     }
 
     const { data: bootstrap, error: bootstrapError } = await ensureUserBootstrap(
@@ -49,7 +54,7 @@ export async function POST(request: Request) {
     }
     return jsonError(
       500,
-      error instanceof Error ? error.message : "Login failed",
+      error instanceof Error ? error.message : "Не получилось войти",
     );
   }
 }

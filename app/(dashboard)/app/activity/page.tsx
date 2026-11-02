@@ -7,13 +7,14 @@ import { describeAuditAction, summarizeAuditChange } from "@/lib/audit/describe"
 import { auditLogQuerySchema } from "@/lib/validations/notification";
 import { AUDIT_PAGE_SIZE, listAuditLog } from "@/services/audit-service";
 import { EmptyState } from "@/components/cute/empty-state";
+import { LOCALE } from "@/lib/locale";
 
 type Props = {
   searchParams: Promise<{ before?: string }>;
 };
 
 function formatWhen(iso: string): string {
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat(LOCALE, {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(iso));
@@ -30,9 +31,9 @@ export default async function ActivityPage({ searchParams }: Props) {
   if (!canAdmin(ctx.role)) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold tracking-tight">Activity log</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">История</h1>
         <p className="text-sm text-muted-foreground">
-          Only household owners and admins can view the activity log.
+          Историю могут смотреть только владелец и админы семьи.
         </p>
       </div>
     );
@@ -50,11 +51,11 @@ export default async function ActivityPage({ searchParams }: Props) {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Activity log</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">История</h1>
         <p className="text-muted-foreground">
-          Important changes in {ctx.householdName}: membership, invitations,
-          settings, accounts, deletions and recurring confirmations. Entries
-          are recorded automatically and cannot be edited.
+          Важные изменения в «{ctx.householdName}»: участники, приглашения,
+          настройки, счета, удаления и подтверждения регулярных платежей.
+          Записи создаются автоматически, изменить их нельзя.
         </p>
       </div>
 
@@ -65,7 +66,7 @@ export default async function ActivityPage({ searchParams }: Props) {
       ) : null}
 
       {entries.length === 0 && !error ? (
-        <EmptyState title="No activity yet" />
+        <EmptyState title="Пока ничего не происходило" />
       ) : (
         <ul className="grid gap-2">
           {entries.map((entry) => {
@@ -95,7 +96,7 @@ export default async function ActivityPage({ searchParams }: Props) {
           href={`/app/activity?before=${encodeURIComponent(oldest)}`}
           className="text-sm underline-offset-4 hover:underline"
         >
-          Older entries
+          Более ранние записи
         </Link>
       ) : null}
     </div>

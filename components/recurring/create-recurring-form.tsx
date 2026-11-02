@@ -72,7 +72,7 @@ export function CreateRecurringForm({
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to create recurring payment");
+        setError(data.error ?? "Не получилось создать регулярный платёж");
         return;
       }
       formEl.reset();
@@ -80,7 +80,7 @@ export function CreateRecurringForm({
       setType("expense");
       router.refresh();
     } catch {
-      setError("Network error — check your connection and try again");
+      setError("Ошибка сети — проверь подключение и попробуй ещё раз");
     } finally {
       setPending(false);
     }
@@ -89,7 +89,7 @@ export function CreateRecurringForm({
   if (accounts.length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        Create an account before adding recurring payments.
+        Сначала создай счёт, а потом добавляй регулярные платежи.
       </p>
     );
   }
@@ -99,14 +99,14 @@ export function CreateRecurringForm({
       onSubmit={onSubmit}
       className="grid gap-3 card-soft p-4"
     >
-      <h2 className="font-medium">New recurring payment</h2>
+      <h2 className="font-medium">Новый регулярный платёж</h2>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor="rp-name">Name</Label>
+          <Label htmlFor="rp-name">Название</Label>
           <Input id="rp-name" name="name" required maxLength={120} />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="rp-type">Type</Label>
+          <Label htmlFor="rp-type">Тип</Label>
           <select
             id="rp-type"
             name="type"
@@ -116,22 +116,22 @@ export function CreateRecurringForm({
               setType(event.target.value as "expense" | "income")
             }
           >
-            <option value="expense">Expense</option>
-            <option value="income">Income</option>
+            <option value="expense">Расход</option>
+            <option value="income">Доход</option>
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="rp-amount">Amount</Label>
+          <Label htmlFor="rp-amount">Сумма</Label>
           <Input
             id="rp-amount"
             name="amount"
             inputMode="decimal"
             required
-            placeholder="50.00"
+            placeholder="50,00"
           />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="rp-account">Account</Label>
+          <Label htmlFor="rp-account">Счёт</Label>
           <select
             id="rp-account"
             name="accountId"
@@ -140,7 +140,7 @@ export function CreateRecurringForm({
             defaultValue=""
           >
             <option value="" disabled>
-              Select account
+              Выбери счёт
             </option>
             {accounts.map((account) => (
               <option key={account.id} value={account.id}>
@@ -150,7 +150,7 @@ export function CreateRecurringForm({
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="rp-category">Category</Label>
+          <Label htmlFor="rp-category">Категория</Label>
           <select
             id="rp-category"
             name="categoryId"
@@ -159,7 +159,7 @@ export function CreateRecurringForm({
             defaultValue=""
           >
             <option value="" disabled>
-              Select category
+              Выбери категорию
             </option>
             {filteredCategories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -169,7 +169,7 @@ export function CreateRecurringForm({
           </select>
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="rp-frequency">Frequency</Label>
+          <Label htmlFor="rp-frequency">Как часто</Label>
           <select
             id="rp-frequency"
             name="frequency"
@@ -177,16 +177,16 @@ export function CreateRecurringForm({
             value={frequency}
             onChange={(event) => setFrequency(event.target.value)}
           >
-            <option value="weekly">Weekly</option>
-            <option value="monthly">Monthly</option>
-            <option value="yearly">Yearly</option>
-            <option value="daily">Daily</option>
-            <option value="custom">Custom (days)</option>
+            <option value="weekly">Каждую неделю</option>
+            <option value="monthly">Каждый месяц</option>
+            <option value="yearly">Каждый год</option>
+            <option value="daily">Каждый день</option>
+            <option value="custom">Свой интервал (дни)</option>
           </select>
         </div>
         {frequency === "custom" ? (
           <div className="grid gap-2">
-            <Label htmlFor="rp-interval">Interval (days)</Label>
+            <Label htmlFor="rp-interval">Интервал (дни)</Label>
             <Input
               id="rp-interval"
               name="intervalDays"
@@ -197,15 +197,15 @@ export function CreateRecurringForm({
           </div>
         ) : null}
         <div className="grid gap-2">
-          <Label htmlFor="rp-start">Start / next date</Label>
+          <Label htmlFor="rp-start">Начало / следующая дата</Label>
           <Input id="rp-start" name="startDate" type="date" required />
         </div>
         <div className="grid gap-2">
-          <Label htmlFor="rp-end">End date (optional)</Label>
+          <Label htmlFor="rp-end">Дата окончания (необязательно)</Label>
           <Input id="rp-end" name="endDate" type="date" />
         </div>
         <div className="grid gap-2 sm:col-span-2">
-          <Label htmlFor="rp-description">Description (optional)</Label>
+          <Label htmlFor="rp-description">Описание (необязательно)</Label>
           <Textarea id="rp-description" name="description" rows={2} />
         </div>
         <label className="flex items-start gap-2 text-sm sm:col-span-2">
@@ -216,11 +216,11 @@ export function CreateRecurringForm({
             className="mt-0.5"
           />
           <span>
-            Mandatory payment
+            Обязательный платёж
             <span className="block text-muted-foreground">
-              Mandatory expenses are reserved from Safe-to-Spend. Untick for
-              optional ones (subscriptions you could cancel) — they still
-              appear in the forecast balance.
+              Обязательные расходы вычитаются из «Можно потратить». Сними галочку
+              для необязательных (например, подписок, которые можно отменить) —
+              они всё равно учитываются в прогнозе баланса.
             </span>
           </span>
         </label>
@@ -231,7 +231,7 @@ export function CreateRecurringForm({
         </p>
       ) : null}
       <Button type="submit" disabled={pending}>
-        {pending ? "Creating…" : "Create"}
+        {pending ? "Создаём…" : "Создать"}
       </Button>
     </form>
   );

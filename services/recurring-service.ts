@@ -52,6 +52,22 @@ function err(code: ServiceError["code"], message: string): ServiceError {
   return { code, message };
 }
 
+/** The SQL functions raise English messages; show them in Russian. */
+const RECURRING_RPC_MESSAGES: Record<string, string> = {
+  "Occurrence not found": "Платёж не найден",
+  "Occurrence already processed": "Этот платёж уже обработан",
+  "Occurrence cannot be confirmed": "Этот платёж нельзя подтвердить",
+  Forbidden: "Нет доступа",
+  "Cannot confirm an archived recurring payment": "Архивный регулярный платёж подтвердить нельзя",
+  "Account not found or inactive": "Счёт не найден или неактивен",
+  "Currency mismatch between template and account": "Валюта платежа не совпадает с валютой счёта",
+  "Amount must be greater than zero": "Сумма должна быть больше нуля",
+};
+
+function translateRecurringRpcMessage(message: string): string {
+  return RECURRING_RPC_MESSAGES[message] ?? message;
+}
+
 /**
  * Monthly and yearly schedules need a stored anchor day so that a short
  * month (Feb 28) does not permanently pull later dates earlier.
@@ -91,7 +107,7 @@ async function assertAccountAndCategory(
     return { error: err("DB", accountError.message) };
   }
   if (!account || !account.is_active) {
-    return { error: err("VALIDATION", "Account not found or inactive") };
+    return { error: err("VALIDATION", "Счёт не найден или неактивен") };
   }
 
   const resolvedCurrency = (currency ?? account.currency).toUpperCase();
@@ -99,7 +115,7 @@ async function assertAccountAndCategory(
     return {
       error: err(
         "VALIDATION",
-        "Currency must match the selected account (FX conversion is not implemented)",
+        "Валюта должна совпадать с валютой выбранного счёта (конвертации пока нет)",
       ),
     };
   }
@@ -119,11 +135,11 @@ async function assertAccountAndCategory(
     (category.household_id !== null &&
       category.household_id !== ctx.householdId)
   ) {
-    return { error: err("VALIDATION", "Category not found") };
+    return { error: err("VALIDATION", "Категория не найдена") };
   }
   if (category.type !== "both" && category.type !== expectedType) {
     return {
-      error: err("VALIDATION", "Category type does not match payment type"),
+      error: err("VALIDATION", "Тип категории не подходит к типу платежа"),
     };
   }
 
@@ -368,7 +384,7 @@ export async function listOccurrencesForPayment(
     return { data: null, error: err("DB", paymentError.message) };
   }
   if (!payment) {
-    return { data: null, error: err("NOT_FOUND", "Recurring payment not found") };
+    return { data: null, error: err("NOT_FOUND", "Регулярный платёж не найден") };
   }
 
   const { data, error } = await supabase
@@ -394,7 +410,7 @@ export async function createRecurringPayment(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot create recurring payments"),
+      error: err("FORBIDDEN", "Наблюдатели не могут создавать регулярные платежи"),
     };
   }
 
@@ -446,7 +462,7 @@ export async function createRecurringPayment(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to create recurring payment"),
+      error: err("DB", error?.message ?? "Не получилось создать регулярный платёж"),
     };
   }
 
@@ -464,7 +480,7 @@ export async function updateRecurringPayment(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot update recurring payments"),
+      error: err("FORBIDDEN", "Наблюдатели не могут менять регулярные платежи"),
     };
   }
 
@@ -479,7 +495,7 @@ export async function updateRecurringPayment(
     return { data: null, error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { data: null, error: err("NOT_FOUND", "Recurring payment not found") };
+    return { data: null, error: err("NOT_FOUND", "Регулярный платёж не найден") };
   }
 
   const nextType = input.type ?? existing.type;
@@ -539,7 +555,7 @@ export async function updateRecurringPayment(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to update recurring payment"),
+      error: err("DB", error?.message ?? "Не получилось обновить регулярный платёж"),
     };
   }
 
@@ -642,7 +658,7 @@ async function rescheduleAfterEdit(
   if (error || !data) {
     return {
       data: null,
-      error: err("DB", error?.message ?? "Failed to reschedule recurring payment"),
+      error: err("DB", error?.message ?? "Не получилось перенести регулярный платёж"),
     };
   }
 
@@ -663,7 +679,7 @@ export async function deleteRecurringPayment(
     return {
       error: err(
         "FORBIDDEN",
-        "Only owners and admins can delete recurring payments",
+        "Удалять регулярные платежи могут только владельцы и админы",
       ),
     };
   }
@@ -679,7 +695,7 @@ export async function deleteRecurringPayment(
     return { error: err("DB", existingError.message) };
   }
   if (!existing) {
-    return { error: err("NOT_FOUND", "Recurring payment not found") };
+    return { error: err("NOT_FOUND", "Регулярный платёж не найден") };
   }
 
   const { error } = await supabase
@@ -710,7 +726,7 @@ export async function confirmOccurrence(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot confirm payments"),
+      error: err("FORBIDDEN", "Наблюдатели не могут подтверждать платежи"),
     };
   }
 
@@ -726,12 +742,12 @@ export async function confirmOccurrence(
     return { data: null, error: err("DB", occError.message) };
   }
   if (!occ) {
-    return { data: null, error: err("NOT_FOUND", "Occurrence not found") };
+    return { data: null, error: err("NOT_FOUND", "Платёж не найден") };
   }
   if (occ.status === "paid" || occ.status === "skipped") {
     return {
       data: null,
-      error: err("CONFLICT", "Occurrence already processed"),
+      error: err("CONFLICT", "Этот платёж уже обработан"),
     };
   }
 
@@ -760,9 +776,12 @@ export async function confirmOccurrence(
         : message.includes("Forbidden")
           ? "FORBIDDEN"
           : "VALIDATION";
-      return { data: null, error: err(code, message.replace(/^.*?: /, "")) };
+      return {
+        data: null,
+        error: err(code, translateRecurringRpcMessage(message.replace(/^.*?: /, ""))),
+      };
     }
-    return { data: null, error: err("DB", "Could not confirm occurrence") };
+    return { data: null, error: err("DB", "Не получилось подтвердить платёж") };
   }
 
   const row = (Array.isArray(rpcData) ? rpcData[0] : rpcData) as {
@@ -772,7 +791,7 @@ export async function confirmOccurrence(
   } | null;
 
   if (!row?.transaction_id) {
-    return { data: null, error: err("DB", "Confirm returned no transaction") };
+    return { data: null, error: err("DB", "После подтверждения не нашлось операции") };
   }
 
   return {
@@ -797,7 +816,7 @@ export async function skipOccurrence(
   if (!canWrite(ctx.role)) {
     return {
       data: null,
-      error: err("FORBIDDEN", "Viewers cannot skip payments"),
+      error: err("FORBIDDEN", "Наблюдатели не могут пропускать платежи"),
     };
   }
 
@@ -812,12 +831,12 @@ export async function skipOccurrence(
     return { data: null, error: err("DB", occError.message) };
   }
   if (!occ) {
-    return { data: null, error: err("NOT_FOUND", "Occurrence not found") };
+    return { data: null, error: err("NOT_FOUND", "Платёж не найден") };
   }
   if (occ.status === "paid" || occ.status === "skipped") {
     return {
       data: null,
-      error: err("CONFLICT", "Occurrence already processed"),
+      error: err("CONFLICT", "Этот платёж уже обработан"),
     };
   }
 
@@ -834,10 +853,10 @@ export async function skipOccurrence(
     if (message.includes("already processed")) {
       return {
         data: null,
-        error: err("CONFLICT", "Occurrence already processed"),
+        error: err("CONFLICT", "Этот платёж уже обработан"),
       };
     }
-    return { data: null, error: err("DB", "Could not skip occurrence") };
+    return { data: null, error: err("DB", "Не получилось пропустить платёж") };
   }
 
   const row = (Array.isArray(rpcData) ? rpcData[0] : rpcData) as {

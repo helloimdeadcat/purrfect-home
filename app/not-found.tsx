@@ -8,12 +8,12 @@ export default function NotFound() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center gap-3 px-4 py-16 text-center">
       <SleepyCat className="w-44" />
-      <h1 className="text-2xl font-semibold tracking-tight">Page not found</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">Страница не найдена</h1>
       <p className="text-sm text-muted-foreground">
-        The cat fell asleep on this page — it doesn&apos;t exist.
+        Котик уснул на этой странице — её не существует.
       </p>
       <Link href="/app/dashboard" className={cn(buttonVariants({ size: "sm" }))}>
-        Go to dashboard
+        На главную
       </Link>
     </main>
   );

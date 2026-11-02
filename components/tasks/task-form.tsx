@@ -109,39 +109,39 @@ export function TaskForm({
         const fieldMessage = data.details?.fieldErrors
           ? Object.values(data.details.fieldErrors).flat()[0]
           : data.details?.formErrors?.[0];
-        setError(fieldMessage ?? data.error ?? "Could not save");
+        setError(fieldMessage ?? data.error ?? "Не получилось сохранить");
         return;
       }
       if (!task) formEl.reset();
       router.refresh();
       onDone?.();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети — проверь подключение");
     } finally {
       setPending(false);
     }
   }
 
   const showInterval = repeat === "daily" || repeat === "weekly" || repeat === "monthly";
-  const unit = repeat === "daily" ? "days" : repeat === "weekly" ? "weeks" : "months";
+  const unit = repeat === "daily" ? "дн." : repeat === "weekly" ? "нед." : "мес.";
 
   return (
     <form onSubmit={onSubmit} className="grid gap-3">
       <div className="grid gap-1.5">
-        <Label htmlFor={`title-${task?.id ?? "new"}`}>What</Label>
+        <Label htmlFor={`title-${task?.id ?? "new"}`}>Что</Label>
         <Input
           id={`title-${task?.id ?? "new"}`}
           name="title"
           required
           maxLength={200}
           defaultValue={task?.title}
-          placeholder="Feed the cat, gym, call grandma…"
+          placeholder="Покормить кота, спортзал, позвонить бабушке…"
         />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <Label htmlFor={`who-${task?.id ?? "new"}`}>Who</Label>
+          <Label htmlFor={`who-${task?.id ?? "new"}`}>Кто</Label>
           <select
             id={`who-${task?.id ?? "new"}`}
             name="assignee"
@@ -157,7 +157,7 @@ export function TaskForm({
         </div>
         <div className="grid gap-1.5">
           <Label htmlFor={`date-${task?.id ?? "new"}`}>
-            {repeat === "none" ? "Date (optional)" : "Starting"}
+            {repeat === "none" ? "Дата (необязательно)" : "Начиная с"}
           </Label>
           <Input
             id={`date-${task?.id ?? "new"}`}
@@ -171,12 +171,12 @@ export function TaskForm({
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={hasTime} onChange={(e) => setHasTime(e.target.checked)} />
-        At a specific time (shows in the schedule)
+        В определённое время (появится в расписании)
       </label>
       {hasTime ? (
         <div className="grid grid-cols-2 gap-3">
           <div className="grid gap-1.5">
-            <Label htmlFor={`start-${task?.id ?? "new"}`}>From</Label>
+            <Label htmlFor={`start-${task?.id ?? "new"}`}>С</Label>
             <Input
               id={`start-${task?.id ?? "new"}`}
               name="startTime"
@@ -186,7 +186,7 @@ export function TaskForm({
             />
           </div>
           <div className="grid gap-1.5">
-            <Label htmlFor={`end-${task?.id ?? "new"}`}>Until (optional)</Label>
+            <Label htmlFor={`end-${task?.id ?? "new"}`}>До (необязательно)</Label>
             <Input
               id={`end-${task?.id ?? "new"}`}
               name="endTime"
@@ -199,23 +199,23 @@ export function TaskForm({
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="grid gap-1.5">
-          <Label htmlFor={`repeat-${task?.id ?? "new"}`}>Repeat</Label>
+          <Label htmlFor={`repeat-${task?.id ?? "new"}`}>Повтор</Label>
           <select
             id={`repeat-${task?.id ?? "new"}`}
             value={repeat}
             onChange={(e) => setRepeat(e.target.value as RepeatChoice)}
             className={SELECT_CLASS}
           >
-            <option value="none">Doesn&apos;t repeat</option>
-            <option value="daily">Daily</option>
-            <option value="weekdays">Weekdays (Mon–Fri)</option>
-            <option value="weekly">Weekly on…</option>
-            <option value="monthly">Monthly</option>
+            <option value="none">Не повторять</option>
+            <option value="daily">Каждый день</option>
+            <option value="weekdays">По будням (Пн–Пт)</option>
+            <option value="weekly">Каждую неделю по…</option>
+            <option value="monthly">Каждый месяц</option>
           </select>
         </div>
         {showInterval ? (
           <div className="grid gap-1.5">
-            <Label htmlFor={`interval-${task?.id ?? "new"}`}>Every</Label>
+            <Label htmlFor={`interval-${task?.id ?? "new"}`}>Раз в</Label>
             <div className="flex items-center gap-2">
               <Input
                 id={`interval-${task?.id ?? "new"}`}
@@ -234,7 +234,7 @@ export function TaskForm({
 
       {repeat === "weekly" ? (
         <fieldset className="grid gap-1.5">
-          <legend className="mb-1 text-sm font-medium">On</legend>
+          <legend className="mb-1 text-sm font-medium">По дням</legend>
           <div className="flex flex-wrap gap-1.5">
             {WEEKDAY_SHORT.map((label, index) => {
               const day = index + 1;
@@ -262,7 +262,7 @@ export function TaskForm({
 
       {repeat === "monthly" ? (
         <div className="grid gap-1.5 sm:w-1/2">
-          <Label htmlFor={`dom-${task?.id ?? "new"}`}>On day</Label>
+          <Label htmlFor={`dom-${task?.id ?? "new"}`}>Число месяца</Label>
           <Input
             id={`dom-${task?.id ?? "new"}`}
             name="dayOfMonth"
@@ -271,13 +271,13 @@ export function TaskForm({
             max={31}
             defaultValue={task?.repeat_day_of_month ?? (defaultDate ? Number(defaultDate.slice(8, 10)) : 1)}
           />
-          <p className="text-xs text-muted-foreground">Short months use their last day.</p>
+          <p className="text-xs text-muted-foreground">В коротких месяцах — последний день месяца.</p>
         </div>
       ) : null}
 
       {repeat !== "none" ? (
         <div className="grid gap-1.5 sm:w-1/2">
-          <Label htmlFor={`until-${task?.id ?? "new"}`}>End date (optional)</Label>
+          <Label htmlFor={`until-${task?.id ?? "new"}`}>Дата окончания (необязательно)</Label>
           <Input
             id={`until-${task?.id ?? "new"}`}
             name="repeatUntil"
@@ -288,7 +288,7 @@ export function TaskForm({
       ) : null}
 
       <div className="grid gap-1.5">
-        <Label htmlFor={`notes-${task?.id ?? "new"}`}>Notes (optional)</Label>
+        <Label htmlFor={`notes-${task?.id ?? "new"}`}>Заметки (необязательно)</Label>
         <Input
           id={`notes-${task?.id ?? "new"}`}
           name="notes"
@@ -304,11 +304,11 @@ export function TaskForm({
       ) : null}
       <div className="flex gap-2">
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : task ? "Save" : "Add"}
+          {pending ? "Сохраняю…" : task ? "Сохранить" : "Добавить"}
         </Button>
         {onDone && task ? (
           <Button type="button" variant="ghost" onClick={onDone}>
-            Cancel
+            Отмена
           </Button>
         ) : null}
       </div>

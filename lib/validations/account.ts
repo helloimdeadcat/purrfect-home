@@ -14,21 +14,21 @@ export const accountTypeSchema = z.enum([
 const moneyInputSchema = z
   .string()
   .trim()
-  .min(1, "Amount is required")
+  .min(1, "Укажи сумму")
   .transform((value, ctx) => {
     try {
       return normalizeMoneyInput(value);
     } catch {
       ctx.addIssue({
         code: "custom",
-        message: "Enter a valid amount with up to 2 decimals",
+        message: "Введи корректную сумму (не больше 2 знаков после запятой)",
       });
       return z.NEVER;
     }
   });
 
 export const createAccountSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(120),
+  name: z.string().trim().min(1, "Укажи название").max(120),
   type: accountTypeSchema,
   currency: z
     .string()

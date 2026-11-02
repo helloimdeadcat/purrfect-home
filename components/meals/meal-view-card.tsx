@@ -41,7 +41,7 @@ export function MealViewCard({
       <table className="w-full text-sm">
         <thead>
           <tr className="text-xs text-muted-foreground">
-            <th className="pb-1 text-left font-normal">Food</th>
+            <th className="pb-1 text-left font-normal">Продукт</th>
             {people.map((p) => (
               <th key={p.memberId} className="pb-1 text-right font-normal">
                 <span className="inline-flex items-center gap-1">
@@ -58,14 +58,14 @@ export function MealViewCard({
             return (
               <tr key={foodId} className="border-t border-border/60">
                 <td className="py-1 pr-2">
-                  {food?.name ?? "Unknown food"}
+                  {food?.name ?? "Неизвестный продукт"}
                   <WeighBadge mode={food?.weigh_mode ?? null} />
                 </td>
                 {people.map((p) => {
                   const g = grams(foodId, p.memberId);
                   return (
                     <td key={p.memberId} className="py-1 text-right tabular-nums">
-                      {g ? `${Number(g)} g` : "—"}
+                      {g ? `${Number(g)} г` : "—"}
                     </td>
                   );
                 })}
@@ -85,7 +85,7 @@ export function MealViewCard({
         href={`/app/assistant?q=${encodeURIComponent(recipeQuestion(meal, foodIds.map((id) => foods.get(id)?.name ?? "")))}`}
         className="justify-self-start text-xs font-medium text-primary underline-offset-4 hover:underline"
       >
-        ✨ Recipe idea
+        ✨ Идея рецепта
       </Link>
     </article>
   );

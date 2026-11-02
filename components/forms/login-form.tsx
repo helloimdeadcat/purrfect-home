@@ -45,14 +45,14 @@ export function LoginForm({ inviteToken }: Props) {
       const data = (await response.json()) as LoginResponse;
 
       if (!response.ok) {
-        setError(data.error ?? "Login failed");
+        setError(data.error ?? "Не получилось войти");
         return;
       }
 
       router.push(data.redirectTo ?? "/app/dashboard");
       router.refresh();
     } catch {
-      setError("Network error. Please try again.");
+      setError("Ошибка сети. Попробуй ещё раз.");
     } finally {
       setPending(false);
     }
@@ -66,12 +66,12 @@ export function LoginForm({ inviteToken }: Props) {
     <form onSubmit={onSubmit} className="flex flex-col gap-4">
       {inviteToken ? (
         <p className="text-sm text-muted-foreground">
-          After signing in you will return to the invitation to accept it.
+          После входа ты вернёшься к приглашению, чтобы принять его.
         </p>
       ) : null}
 
       <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Почта</Label>
         <Input
           id="email"
           name="email"
@@ -82,7 +82,7 @@ export function LoginForm({ inviteToken }: Props) {
       </div>
 
       <div className="grid gap-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password">Пароль</Label>
         <Input
           id="password"
           name="password"
@@ -99,13 +99,13 @@ export function LoginForm({ inviteToken }: Props) {
       ) : null}
 
       <Button type="submit" disabled={pending} className="w-full">
-        {pending ? "Signing in…" : "Sign in"}
+        {pending ? "Входим…" : "Войти"}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        No account yet?{" "}
+        Ещё нет аккаунта?{" "}
         <Link href={registerHref} className="underline underline-offset-4">
-          Create one
+          Зарегистрироваться
         </Link>
       </p>
     </form>

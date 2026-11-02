@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { buildMonthGrid, dayIso } from "@/lib/calculations/calendar-grid";
 import { displayMoney } from "@/lib/calculations/money";
+import { LOCALE } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 import type { CalendarEvent } from "@/services/calendar-service";
 
@@ -13,7 +14,12 @@ type Props = {
   selectedDate: string | null;
 };
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+// Monday-first short weekday names from Intl (2024-01-01 was a Monday).
+const WEEKDAYS = Array.from({ length: 7 }, (_, index) =>
+  new Intl.DateTimeFormat(LOCALE, { weekday: "short", timeZone: "UTC" }).format(
+    new Date(Date.UTC(2024, 0, 1 + index)),
+  ),
+);
 
 export function CalendarMonthGrid({
   year,

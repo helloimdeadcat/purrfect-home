@@ -7,6 +7,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { getHouseholdContext } from "@/lib/auth/household";
 import { getSessionUser } from "@/lib/auth/session";
 import { addDays, weekStart } from "@/lib/calculations/task-schedule";
+import { LOCALE } from "@/lib/locale";
 import { WEEKDAY_SHORT } from "@/lib/tasks/describe";
 import { cn } from "@/lib/utils";
 import { getHouseholdToday } from "@/services/settings-service";
@@ -17,7 +18,7 @@ type Props = {
 };
 
 function dayLabel(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", timeZone: "UTC" }).format(
+  return new Intl.DateTimeFormat(LOCALE, { day: "numeric", month: "short", timeZone: "UTC" }).format(
     new Date(`${iso}T00:00:00Z`),
   );
 }
@@ -38,7 +39,7 @@ export default async function SchedulePage({ searchParams }: Props) {
   if (!view) {
     return (
       <div className="flex flex-col gap-4">
-        <h1 className="text-2xl font-semibold">Schedule</h1>
+        <h1 className="text-2xl font-semibold">Расписание</h1>
         <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
@@ -56,19 +57,19 @@ export default async function SchedulePage({ searchParams }: Props) {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">Schedule</h1>
+          <h1 className="text-2xl font-semibold">Расписание</h1>
           <p className="text-muted-foreground">
-            Week of {dayLabel(days[0])} – {dayLabel(days[6])} · who is doing what
+            Неделя {dayLabel(days[0])} – {dayLabel(days[6])} · кто чем занят
           </p>
         </div>
         <div className="flex gap-2">
-          {nav("← Prev", addDays(monday, -7))}
-          {nav("This week", today)}
-          {nav("Next →", addDays(monday, 7))}
+          {nav("← Назад", addDays(monday, -7))}
+          {nav("Эта неделя", today)}
+          {nav("Вперёд →", addDays(monday, 7))}
         </div>
       </div>
 
-      <ul aria-label="People" className="flex flex-wrap gap-3 text-sm">
+      <ul aria-label="Люди" className="flex flex-wrap gap-3 text-sm">
         {view.personOptions.map((p) => (
           <li key={p.memberId ?? "together"} className="inline-flex items-center gap-1.5">
             <span aria-hidden className="size-3 rounded-full" style={{ background: p.color }} />
@@ -79,7 +80,7 @@ export default async function SchedulePage({ searchParams }: Props) {
 
       {view.canEdit ? (
         <details className="card-soft p-4">
-          <summary className="cursor-pointer font-medium">＋ Add to schedule</summary>
+          <summary className="cursor-pointer font-medium">＋ Добавить в расписание</summary>
           <div className="mt-3">
             <TaskForm
               people={view.personOptions}
@@ -106,11 +107,11 @@ export default async function SchedulePage({ searchParams }: Props) {
               <h2 className="flex items-baseline justify-between px-1 text-sm">
                 <span className="font-semibold">{WEEKDAY_SHORT[index]}</span>
                 <span className={cn("text-muted-foreground", isToday && "font-semibold text-primary")}>
-                  {isToday ? "Today" : dayLabel(date)}
+                  {isToday ? "Сегодня" : dayLabel(date)}
                 </span>
               </h2>
               {items.length === 0 ? (
-                <p className="px-1 pb-1 text-xs text-muted-foreground">Free ♥</p>
+                <p className="px-1 pb-1 text-xs text-muted-foreground">Свободно ♥</p>
               ) : (
                 <ul className="grid gap-1.5">
                   {items.map((item) => {
@@ -133,11 +134,11 @@ export default async function SchedulePage({ searchParams }: Props) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        Edit or delete items on the{" "}
+        Изменить или удалить дела можно на странице{" "}
         <Link href="/app/tasks" className="underline underline-offset-4">
-          To-do
-        </Link>{" "}
-        page. Changes to repeating items apply to every date.
+          «Дела»
+        </Link>
+        . Изменения повторяющихся дел применяются ко всем датам.
       </p>
     </div>
   );

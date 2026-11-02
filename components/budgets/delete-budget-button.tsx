@@ -23,12 +23,12 @@ export function DeleteBudgetButton({ budgetId }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to delete budget");
+        setError(data.error ?? "Не получилось удалить бюджет");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -43,7 +43,7 @@ export function DeleteBudgetButton({ budgetId }: Props) {
         disabled={pending}
         onClick={onDelete}
       >
-        {pending ? "Removing…" : "Remove"}
+        {pending ? "Удаляем…" : "Удалить"}
       </Button>
       {error ? (
         <p className="text-xs text-destructive" role="alert">

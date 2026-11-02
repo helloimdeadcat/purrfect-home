@@ -41,4 +41,12 @@ describe("service worker", () => {
     expect(sw).toContain('request.mode !== "navigate"');
     expect(sw).not.toMatch(/\/api\//);
   });
+
+  it("uses a monochrome badge for Android status-bar notifications", () => {
+    expect(sw).toContain('badge: "/badge-96.png"');
+    const badge = path.join(publicDir, "badge-96.png");
+    expect(existsSync(badge)).toBe(true);
+    // Colour type RGBA (IHDR byte 9 = 6) — alpha mask required by Android.
+    expect(readFileSync(badge)[25]).toBe(6);
+  });
 });

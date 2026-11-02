@@ -26,6 +26,14 @@ export type HabitCardParticipant = {
   thisWeek: number | null;
 };
 
+const STATUS_LABEL: Record<DayStatus, string> = {
+  done: "готово",
+  partial: "частично",
+  missed: "пропущено",
+  open: "ещё не отмечено",
+  off: "выходной",
+};
+
 function weekdayInitial(date: string): string {
   const d = new Date(`${date}T00:00:00Z`).getUTCDay();
   return WEEKDAY_SHORT[(d + 6) % 7].slice(0, 2);
@@ -136,7 +144,7 @@ export function HabitCard({
       });
       if (!response.ok) {
         const data = (await response.json().catch(() => ({}))) as { error?: string };
-        throw new Error(data.error ?? "Couldn't save");
+        throw new Error(data.error ?? "Не получилось сохранить");
       }
       router.refresh();
     } catch (e) {
@@ -146,15 +154,15 @@ export function HabitCard({
         else next[date] = previous;
         return next;
       });
-      setError(e instanceof Error ? e.message : "Couldn't save");
+      setError(e instanceof Error ? e.message : "Не получилось сохранить");
     }
   }
 
   async function remove() {
-    if (!window.confirm(`Delete "${habit.title}" and its history?`)) return;
+    if (!window.confirm(`Удалить «${habit.title}» вместе с историей?`)) return;
     const response = await fetch(`/api/habits/${habit.id}`, { method: "DELETE" });
     if (response.ok) router.refresh();
-    else setError("Couldn't delete");
+    else setError("Не получилось удалить");
   }
 
   return (
@@ -175,11 +183,11 @@ export function HabitCard({
         {canManage ? (
           <div className="flex shrink-0 gap-1">
             <Button type="button" size="xs" variant="ghost" onClick={() => setEditing((v) => !v)}>
-              Edit
+              Изменить
             </Button>
             {canDelete ? (
               <Button type="button" size="xs" variant="ghost" onClick={() => void remove()}>
-                Delete
+                Удалить
               </Button>
             ) : null}
           </div>
@@ -207,7 +215,7 @@ export function HabitCard({
                 <span className="inline-flex items-center gap-1.5 font-medium">
                   <span aria-hidden className="size-2.5 rounded-full" style={{ background: p.color }} />
                   {p.label}
-                  {p.isYou ? <span className="text-muted-foreground">(you)</span> : null}
+                  {p.isYou ? <span className="text-muted-foreground">(ты)</span> : null}
                 </span>
                 <span className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                   <span className={cn(p.streakCount > 0 && "font-semibold text-foreground")}>
@@ -216,10 +224,10 @@ export function HabitCard({
                   </span>
                   {perWeekTimes !== null && p.thisWeek !== null ? (
                     <span>
-                      · {p.thisWeek}/{perWeekTimes} this week
+                      · {p.thisWeek}/{perWeekTimes} на этой неделе
                     </span>
                   ) : null}
-                  {p.rate30 !== null ? <span>· {Math.round(p.rate30 * 100)}% (30d)</span> : null}
+                  {p.rate30 !== null ? <span>· {Math.round(p.rate30 * 100)}% (30 дн.)</span> : null}
                 </span>
               </div>
 
@@ -233,7 +241,7 @@ export function HabitCard({
                     target={target}
                     color={p.color}
                     label={`${p.label} · ${day.date}: ${
-                      day.status === "done" ? "done" : day.value > 0 ? `${formatAmount(day.value)} of ${formatAmount(target)}` : day.status
+                      day.value > 0 && day.status !== "done" ? `${formatAmount(day.value)} из ${formatAmount(target)}` : STATUS_LABEL[day.status]
                     }`}
                     onClick={
                       day.canEdit
@@ -251,7 +259,7 @@ export function HabitCard({
                     variant={todayDone ? "secondary" : "default"}
                     onClick={() => void save(today, todayDone ? 0 : 1)}
                   >
-                    {todayDone ? "Done today ♥ (undo)" : "Mark done today"}
+                    {todayDone ? "Сегодня готово ♥ (отменить)" : "Отметить на сегодня"}
                   </Button>
                 ) : (
                   <div className="flex items-center justify-between gap-2">
@@ -259,7 +267,7 @@ export function HabitCard({
                       type="button"
                       variant="outline"
                       size="icon"
-                      aria-label="Less"
+                      aria-label="Меньше"
                       disabled={todayDay.value <= 0}
                       onClick={() => void save(today, Math.max(0, roundAmount(todayDay.value - step)))}
                     >
@@ -269,12 +277,12 @@ export function HabitCard({
                       <span className={cn("text-lg font-semibold", todayDone && "text-income")}>
                         {formatAmount(todayDay.value)}
                       </span>{" "}
-                      / {formatAmount(target)} {unit ?? ""} today
+                      / {formatAmount(target)} {unit ?? ""} сегодня
                     </span>
                     <Button
                       type="button"
                       size="icon"
-                      aria-label="More"
+                      aria-label="Больше"
                       onClick={() => void save(today, roundAmount(todayDay.value + step))}
                     >
                       +

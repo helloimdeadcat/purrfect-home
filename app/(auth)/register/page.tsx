@@ -26,8 +26,8 @@ export default async function RegisterPage({ searchParams }: Props) {
         </CardTitle>
         <CardDescription>
           {invite
-            ? "Create an account to join a household"
-            : "Create your family household"}
+            ? "Создай аккаунт, чтобы присоединиться к семье"
+            : "Создай свою семью"}
         </CardDescription>
       </CardHeader>
       <CardContent>

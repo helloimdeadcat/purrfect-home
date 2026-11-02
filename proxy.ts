@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { REQUEST_METHOD_HEADER } from "@/lib/push/config";
 import type { Database } from "@/types/database";
 
 function isProtectedPath(pathname: string): boolean {
@@ -47,6 +48,10 @@ function misconfiguredResponse(request: NextRequest): NextResponse {
  */
 export async function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  // Route handlers only see headers(): forward the real method (overwriting
+  // any client value) so requireHousehold() can push after mutations.
+  // Forwarded below via NextResponse.next({ request }).
+  request.headers.set(REQUEST_METHOD_HEADER, request.method);
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

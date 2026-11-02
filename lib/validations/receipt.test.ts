@@ -42,7 +42,7 @@ describe("validateReceiptBytes", () => {
   it("rejects empty and oversized files", () => {
     expect(validateReceiptBytes(new Uint8Array())).toEqual({
       ok: false,
-      message: "File is empty",
+      message: "Файл пустой",
     });
     const big = new Uint8Array(MAX_RECEIPT_BYTES + 1);
     big.set([0xff, 0xd8, 0xff]);
@@ -62,7 +62,7 @@ describe("sanitizeReceiptFileName", () => {
     expect(sanitizeReceiptFileName("../../etc/passwd")).toBe("passwd");
     expect(sanitizeReceiptFileName("C:\\Users\\x\\scan.pdf")).toBe("scan.pdf");
     expect(sanitizeReceiptFileName("bon\u0000\u001b.jpg")).toBe("bon.jpg");
-    expect(sanitizeReceiptFileName("")).toBe("receipt");
+    expect(sanitizeReceiptFileName("")).toBe("чек");
     expect(sanitizeReceiptFileName("a".repeat(300))).toHaveLength(120);
   });
 });

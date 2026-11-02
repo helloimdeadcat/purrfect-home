@@ -20,10 +20,10 @@ export function WeighBadge({ mode }: { mode: WeighMode | null }) {
 
 export function macroLine(m: Macros | undefined): string {
   if (!m) return "—";
-  return `${Math.round(m.kcal)} kcal · P ${Math.round(m.protein)} / F ${Math.round(m.fat)} / C ${Math.round(m.carbs)}`;
+  return `${Math.round(m.kcal)} ккал · Б ${Math.round(m.protein)} / Ж ${Math.round(m.fat)} / У ${Math.round(m.carbs)}`;
 }
 
-const STATUS_TEXT = { below: "below", within: "on target", above: "above", none: "" } as const;
+const STATUS_TEXT = { below: "мало", within: "в норме", above: "много", none: "" } as const;
 
 /**
  * One person's day vs their targets: a kcal bar plus protein/fat range chips.
@@ -57,14 +57,14 @@ export function DaySummary({
         </span>
         <span className="tabular-nums">
           <span className="text-lg font-semibold">{kcal}</span>
-          {goal ? <span className="text-muted-foreground"> / {goal} kcal</span> : " kcal"}
+          {goal ? <span className="text-muted-foreground"> / {goal} ккал</span> : " ккал"}
         </span>
       </div>
       {goal ? (
         <div
           className="h-2.5 overflow-hidden rounded-full bg-muted"
           role="progressbar"
-          aria-label={`${label}: ${kcal} of ${goal} kcal`}
+          aria-label={`${label}: ${kcal} из ${goal} ккал`}
           aria-valuenow={kcal}
           aria-valuemin={0}
           aria-valuemax={goal}
@@ -74,8 +74,8 @@ export function DaySummary({
       ) : null}
       <div className="flex flex-wrap gap-1.5 text-xs">
         {[
-          { name: "Protein", value: protein, status: proteinStatus, min: target?.proteinMin, max: target?.proteinMax },
-          { name: "Fat", value: fat, status: fatStatus, min: target?.fatMin, max: target?.fatMax },
+          { name: "Белки", value: protein, status: proteinStatus, min: target?.proteinMin, max: target?.proteinMax },
+          { name: "Жиры", value: fat, status: fatStatus, min: target?.fatMin, max: target?.fatMax },
         ].map((chip) => (
           <span
             key={chip.name}
@@ -85,16 +85,16 @@ export function DaySummary({
               (chip.status === "below" || chip.status === "above") && "border-border bg-card",
             )}
           >
-            {chip.name} {chip.value} g
+            {chip.name} {chip.value} г
             {chip.min != null || chip.max != null ? ` (${chip.min ?? "–"}–${chip.max ?? "–"})` : ""}
             {chip.status !== "none" ? ` · ${STATUS_TEXT[chip.status]}` : ""}
           </span>
         ))}
         <span className="rounded-full border border-border bg-card px-2 py-0.5">
-          Carbs {Math.round(totals?.carbs ?? 0)} g
+          Углеводы {Math.round(totals?.carbs ?? 0)} г
         </span>
         <span className="rounded-full border border-border bg-card px-2 py-0.5">
-          Fiber ≈{Math.round(totals?.fiber ?? 0)} g
+          Клетчатка ≈{Math.round(totals?.fiber ?? 0)} г
         </span>
       </div>
     </div>

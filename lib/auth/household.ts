@@ -59,7 +59,7 @@ export async function getHouseholdContext(
   }
 
   if (!membership) {
-    return { data: null, error: "No household membership found" };
+    return { data: null, error: "Ты пока не состоишь ни в одной семье" };
   }
 
   const { data: household, error: householdError } = await supabase
@@ -71,7 +71,7 @@ export async function getHouseholdContext(
   if (householdError || !household) {
     return {
       data: null,
-      error: householdError?.message ?? "Household not found",
+      error: householdError?.message ?? "Семья не найдена",
     };
   }
 

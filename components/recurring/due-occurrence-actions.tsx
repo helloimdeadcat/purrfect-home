@@ -7,7 +7,31 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { asMoney, displayMoney } from "@/lib/calculations/money";
+import { LOCALE } from "@/lib/locale";
 import type { DueOccurrenceView } from "@/services/recurring-service";
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: "К оплате",
+  overdue: "Просрочено",
+  paid: "Оплачено",
+  skipped: "Пропущено",
+};
+
+const TYPE_LABELS: Record<string, string> = {
+  expense: "расход",
+  income: "доход",
+};
+
+const dayFormat = new Intl.DateTimeFormat(LOCALE, {
+  day: "numeric",
+  month: "long",
+  timeZone: "UTC",
+});
+
+function formatDay(isoDate: string): string {
+  const date = new Date(`${isoDate}T00:00:00Z`);
+  return Number.isNaN(date.getTime()) ? isoDate : dayFormat.format(date);
+}
 
 type Props = {
   occurrence: DueOccurrenceView;
@@ -41,12 +65,12 @@ export function DueOccurrenceActions({ occurrence }: Props) {
         const fieldMessage = data.details?.fieldErrors
           ? Object.values(data.details.fieldErrors).flat()[0]
           : null;
-        setError(fieldMessage ?? data.error ?? "Confirm failed");
+        setError(fieldMessage ?? data.error ?? "Не получилось подтвердить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -72,12 +96,12 @@ export function DueOccurrenceActions({ occurrence }: Props) {
         const fieldMessage = data.details?.fieldErrors
           ? Object.values(data.details.fieldErrors).flat()[0]
           : null;
-        setError(fieldMessage ?? data.error ?? "Skip failed");
+        setError(fieldMessage ?? data.error ?? "Не получилось пропустить");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -88,9 +112,10 @@ export function DueOccurrenceActions({ occurrence }: Props) {
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p className="font-medium">{occurrence.paymentName}</p>
-          <p className="text-sm text-muted-foreground capitalize">
-            {occurrence.effectiveStatus} · {occurrence.scheduled_date} ·{" "}
-            {occurrence.paymentType}
+          <p className="text-sm text-muted-foreground">
+            {STATUS_LABELS[occurrence.effectiveStatus] ?? occurrence.effectiveStatus}{" "}
+            · {formatDay(occurrence.scheduled_date)} ·{" "}
+            {TYPE_LABELS[occurrence.paymentType] ?? occurrence.paymentType}
           </p>
         </div>
         <p className="font-medium tabular-nums">
@@ -102,7 +127,7 @@ export function DueOccurrenceActions({ occurrence }: Props) {
       </div>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto] sm:items-end">
         <div className="grid gap-1">
-          <Label htmlFor={`amt-${occurrence.id}`}>Confirm amount</Label>
+          <Label htmlFor={`amt-${occurrence.id}`}>Сумма для подтверждения</Label>
           <Input
             id={`amt-${occurrence.id}`}
             value={amount}
@@ -116,7 +141,7 @@ export function DueOccurrenceActions({ occurrence }: Props) {
           disabled={pending}
           onClick={() => void confirm()}
         >
-          Confirm
+          Подтвердить
         </Button>
         <Button
           type="button"
@@ -125,7 +150,7 @@ export function DueOccurrenceActions({ occurrence }: Props) {
           disabled={pending}
           onClick={() => void skip()}
         >
-          Skip
+          Пропустить
         </Button>
       </div>
       {error ? (

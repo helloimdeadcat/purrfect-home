@@ -32,12 +32,12 @@ export function RenameHouseholdForm({ currentName }: Props) {
       });
       const data = (await response.json()) as { error?: string };
       if (!response.ok) {
-        setError(data.error ?? "Failed to rename household");
+        setError(data.error ?? "Не получилось переименовать семью");
         return;
       }
       router.refresh();
     } catch {
-      setError("Network error");
+      setError("Ошибка сети");
     } finally {
       setPending(false);
     }
@@ -48,10 +48,10 @@ export function RenameHouseholdForm({ currentName }: Props) {
       onSubmit={onSubmit}
       className="grid gap-3 card-soft p-4"
     >
-      <h2 className="font-medium">Household name</h2>
+      <h2 className="font-medium">Название семьи</h2>
       <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-end">
         <div className="grid gap-2">
-          <Label htmlFor="household-name">Name</Label>
+          <Label htmlFor="household-name">Название</Label>
           <Input
             id="household-name"
             name="name"
@@ -61,7 +61,7 @@ export function RenameHouseholdForm({ currentName }: Props) {
           />
         </div>
         <Button type="submit" disabled={pending}>
-          {pending ? "Saving…" : "Save"}
+          {pending ? "Сохраняем…" : "Сохранить"}
         </Button>
       </div>
       {error ? (
