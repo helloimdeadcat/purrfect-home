@@ -9,32 +9,32 @@ const navGroups: NavGroup[] = [
   {
     title: "Дом",
     items: [
-      { href: "/app/dashboard", label: "Главная" },
-      { href: "/app/tasks", label: "Дела" },
-      { href: "/app/schedule", label: "Расписание" },
-      { href: "/app/habits", label: "Привычки" },
-      { href: "/app/meals", label: "Питание" },
-      { href: "/app/shopping", label: "Покупки" },
-      { href: "/app/assistant", label: "Морти ✨" },
+      { href: "/app/dashboard", label: "🏠 Главная" },
+      { href: "/app/tasks", label: "✅ Дела" },
+      { href: "/app/schedule", label: "📅 Расписание" },
+      { href: "/app/habits", label: "🔥 Привычки" },
+      { href: "/app/meals", label: "🍽️ Питание" },
+      { href: "/app/shopping", label: "🛒 Покупки" },
+      { href: "/app/assistant", label: "🐱 Морти" },
     ],
   },
   {
     title: "Деньги",
     items: [
-      { href: "/app/transactions", label: "Операции" },
-      { href: "/app/accounts", label: "Счета" },
-      { href: "/app/budgets", label: "Бюджеты" },
-      { href: "/app/goals", label: "Цели" },
-      { href: "/app/recurring", label: "Регулярные платежи" },
-      { href: "/app/calendar", label: "Календарь" },
-      { href: "/app/analytics", label: "Аналитика" },
+      { href: "/app/transactions", label: "💸 Операции" },
+      { href: "/app/accounts", label: "🏦 Счета" },
+      { href: "/app/budgets", label: "📊 Бюджеты" },
+      { href: "/app/goals", label: "🎯 Цели" },
+      { href: "/app/recurring", label: "🔁 Регулярные платежи" },
+      { href: "/app/calendar", label: "🗓️ Календарь" },
+      { href: "/app/analytics", label: "📈 Аналитика" },
     ],
   },
   {
     title: "Семья",
     items: [
-      { href: "/app/family", label: "Семья" },
-      { href: "/app/settings", label: "Настройки" },
+      { href: "/app/family", label: "👥 Семья" },
+      { href: "/app/settings", label: "⚙️ Настройки" },
     ],
   },
 ];
@@ -63,7 +63,7 @@ export default async function AppLayout({
                 ...group,
                 items: [
                   ...group.items,
-                  { href: "/app/activity", label: "История" },
+                  { href: "/app/activity", label: "📜 История" },
                 ],
               }
             : group,

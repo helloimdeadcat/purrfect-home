@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         error ?? { code: "DB", message: "Не получилось добавить" },
       );
     }
-    return Response.json({ item: data }, { status: 201 });
+    return Response.json({ items: data, item: data[0] ?? null }, { status: 201 });
   } catch (error) {
     return handleRouteError(error);
   }

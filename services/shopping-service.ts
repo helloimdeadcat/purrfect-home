@@ -3,9 +3,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { HouseholdContext } from "@/lib/auth/household";
 import { canWrite } from "@/lib/auth/household";
 import { fetchAllPages } from "@/lib/supabase/fetch-all";
-import type {
-  CreateShoppingItemInput,
-  UpdateShoppingItemInput,
+import {
+  splitShoppingTitles,
+  type CreateShoppingItemInput,
+  type UpdateShoppingItemInput,
 } from "@/lib/validations/shopping";
 import { loadMealPlanView, shoppingText } from "@/services/meal-service";
 import type { Database } from "@/types/database";
@@ -57,9 +58,14 @@ export async function createShoppingItem(
   supabase: AppSupabase,
   ctx: HouseholdContext,
   input: CreateShoppingItemInput,
-): Promise<{ data: ShoppingItem | null; error: ServiceError | null }> {
+): Promise<{ data: ShoppingItem[] | null; error: ServiceError | null }> {
   if (!canWrite(ctx.role)) {
     return { data: null, error: err("FORBIDDEN", "Нет прав добавлять покупки") };
+  }
+
+  const titles = splitShoppingTitles(input.title);
+  if (titles.length === 0) {
+    return { data: null, error: err("VALIDATION", "Напиши хотя бы одну позицию") };
   }
 
   const { data: maxRow } = await supabase
@@ -71,21 +77,29 @@ export async function createShoppingItem(
     .limit(1)
     .maybeSingle();
 
+  let sort = maxRow?.sort_order ?? 0;
+  const note = input.note?.trim() || null;
+  const rows: Database["public"]["Tables"]["shopping_items"]["Insert"][] =
+    titles.map((title) => {
+      sort += 1;
+      return {
+        household_id: ctx.householdId,
+        title,
+        note,
+        sort_order: sort,
+        source: "manual",
+        created_by: ctx.user.id,
+      };
+    });
+
   const { data, error } = await supabase
     .from("shopping_items")
-    .insert({
-      household_id: ctx.householdId,
-      title: input.title.trim(),
-      note: input.note?.trim() || null,
-      sort_order: (maxRow?.sort_order ?? 0) + 1,
-      source: "manual",
-      created_by: ctx.user.id,
-    })
+    .insert(rows)
     .select("*")
-    .single();
+    .order("sort_order", { ascending: true });
 
   if (error) return { data: null, error: err("DB", error.message) };
-  return { data, error: null };
+  return { data: data ?? [], error: null };
 }
 
 export async function updateShoppingItem(

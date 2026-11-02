@@ -76,14 +76,20 @@ export function ShoppingList({ items, canEdit }: Props) {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Молоко, хлеб, кошачий корм…"
-            maxLength={200}
+            maxLength={2000}
             disabled={busy}
             className="sm:flex-1"
+            aria-describedby="shopping-split-hint"
           />
           <Button type="submit" disabled={busy || !title.trim()}>
             Добавить
           </Button>
         </form>
+      ) : null}
+      {canEdit ? (
+        <p id="shopping-split-hint" className="text-xs text-muted-foreground">
+          Несколько позиций — через запятую: каждая станет отдельным пунктом.
+        </p>
       ) : null}
 
       <div className="flex flex-wrap gap-2">
