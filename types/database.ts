@@ -942,6 +942,34 @@ export type Database = {
         Update: Partial<Database["public"]["Tables"]["nutrition_targets"]["Insert"]>;
         Relationships: [];
       };
+      shopping_items: {
+        Row: {
+          id: string;
+          household_id: string;
+          title: string;
+          is_done: boolean;
+          sort_order: number;
+          note: string | null;
+          source: "manual" | "meal_plan";
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          household_id: string;
+          title: string;
+          is_done?: boolean;
+          sort_order?: number;
+          note?: string | null;
+          source?: "manual" | "meal_plan";
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["shopping_items"]["Insert"]>;
+        Relationships: [];
+      };
       audit_logs: {
         Row: {
           id: string;

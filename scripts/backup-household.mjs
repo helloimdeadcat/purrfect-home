@@ -66,6 +66,7 @@ const TABLES = [
   "meal_plan_meals",
   "meal_plan_portions",
   "nutrition_targets",
+  "shopping_items",
   "notifications",
   "audit_logs",
 ];

@@ -38,6 +38,7 @@ const PROBES = [
   ["20261027120000 push", "GET", "push_subscriptions?select=id&limit=1"],
   ["20261027120000 push", "GET", "notifications?select=pushed_at&limit=1"],
   ["20261027130000 retention", "POST", "rpc/cleanup_expired_data"],
+  ["20261102100000 shopping", "GET", "shopping_items?select=id&limit=1"],
 ];
 
 let missing = 0;

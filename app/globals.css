@@ -188,6 +188,8 @@
   }
   html {
     @apply font-sans;
+    /* Prefer tap over double-tap zoom on iOS/Android. */
+    touch-action: manipulation;
   }
   h1,
   h2,
