@@ -71,25 +71,25 @@ export function ShoppingList({ items, canEdit }: Props) {
   return (
     <div className="grid gap-6">
       {canEdit ? (
-        <form onSubmit={onAdd} className="flex flex-col gap-2 sm:flex-row">
-          <Input
-            value={title}
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="Молоко, хлеб, кошачий корм…"
-            maxLength={2000}
-            disabled={busy}
-            className="sm:flex-1"
-            aria-describedby="shopping-split-hint"
-          />
-          <Button type="submit" disabled={busy || !title.trim()}>
-            Добавить
-          </Button>
-        </form>
-      ) : null}
-      {canEdit ? (
-        <p id="shopping-split-hint" className="text-xs text-muted-foreground">
-          Несколько позиций — через запятую: каждая станет отдельным пунктом.
-        </p>
+        <div className="grid gap-1.5">
+          <form onSubmit={onAdd} className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="Молоко, хлеб, кошачий корм…"
+              maxLength={2000}
+              disabled={busy}
+              className="sm:flex-1"
+              aria-describedby="shopping-split-hint"
+            />
+            <Button type="submit" disabled={busy || !title.trim()}>
+              Добавить
+            </Button>
+          </form>
+          <p id="shopping-split-hint" className="text-xs text-muted-foreground">
+            Несколько позиций — через запятую: каждая станет отдельным пунктом.
+          </p>
+        </div>
       ) : null}
 
       <div className="flex flex-wrap gap-2">
