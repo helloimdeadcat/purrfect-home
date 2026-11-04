@@ -19,9 +19,12 @@ const input = { messages: [{ role: "user" as const, content: "hi" }] };
 
 describe("getAiConfig", () => {
   it("adds the lite fallback by default and lets it be turned off", () => {
-    expect(getAiConfig({ AI_API_KEY: "k" })).toMatchObject({ model: "gemini-flash-latest", fallbackModel: "gemini-flash-lite-latest" });
+    expect(getAiConfig({ AI_API_KEY: "k" })).toMatchObject({
+      model: "gemini-3.8-flash",
+      fallbackModel: "gemini-3.5-flash-lite",
+    });
     expect(getAiConfig({ AI_API_KEY: "k", AI_FALLBACK_MODEL: "off" })?.fallbackModel).toBeUndefined();
-    expect(getAiConfig({ AI_API_KEY: "k", AI_MODEL: "gemini-flash-lite-latest" })?.fallbackModel).toBeUndefined();
+    expect(getAiConfig({ AI_API_KEY: "k", AI_MODEL: "gemini-3.5-flash-lite" })?.fallbackModel).toBeUndefined();
     expect(getAiConfig({})).toBeNull();
   });
 });
@@ -63,7 +66,12 @@ describe("chatCompletion", () => {
   });
 
   it("reports the error when both models fail", async () => {
-    const { fetchImpl } = fakeFetch({ main: () => new Response("", { status: 503 }), lite: () => new Response("", { status: 503 }) });
-    await expect(chatCompletion(config, input, fetchImpl)).rejects.toMatchObject({ kind: "upstream" });
+    const { fetchImpl } = fakeFetch({
+      main: () => new Response("", { status: 503 }),
+      lite: () => new Response("", { status: 503 }),
+    });
+    await expect(chatCompletion(config, input, fetchImpl)).rejects.toMatchObject({
+      kind: "rate_limited",
+    });
   });
 });

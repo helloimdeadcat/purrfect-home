@@ -123,8 +123,20 @@ async function requestOnce(
     clearTimeout(timer);
   }
 
-  if (response.status === 429) throw new AiError("Бесплатный лимит ИИ пока исчерпан — попробуй позже", "rate_limited");
-  if (response.status === 401 || response.status === 403) throw new AiError("Ключ ИИ не указан или неверный", "auth");
+  if (response.status === 429) {
+    throw new AiError("Бесплатный лимит ИИ пока исчерпан — попробуй позже", "rate_limited");
+  }
+  if (response.status === 401 || response.status === 403) {
+    throw new AiError("Ключ ИИ не указан или неверный", "auth");
+  }
+  // Google often returns 503 "high demand" on free Flash — treat like a soft
+  // limit so the UI asks to retry instead of looking like our server broke.
+  if (response.status === 503) {
+    throw new AiError(
+      "ИИ сейчас перегружен (у Google высокая нагрузка) — подожди минуту и попробуй ещё раз",
+      "rate_limited",
+    );
+  }
   if (!response.ok) throw new AiError(`Ошибка ИИ-сервиса (${response.status})`, "upstream");
 
   const data = (await response.json()) as {
